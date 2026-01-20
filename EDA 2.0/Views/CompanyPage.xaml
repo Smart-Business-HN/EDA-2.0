@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="EDA_2._0.Views.CompanyPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EDA_2._0.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent"
+    Loaded="Page_Loaded">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock
+                Text="Informacion de la Empresa"
+                FontSize="28"
+                FontWeight="SemiBold"/>
+            <TextBlock
+                Text="Configure los datos de su empresa"
+                FontSize="14"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="16" MaxWidth="600" HorizontalAlignment="Left">
+                <!-- Informacion Basica -->
+                <TextBlock Text="Informacion Basica" FontWeight="SemiBold" FontSize="16"/>
+
+                <TextBox
+                    x:Name="NameTextBox"
+                    Header="Nombre de la Empresa *"
+                    PlaceholderText="Ingrese el nombre de la empresa"/>
+
+                <TextBox
+                    x:Name="OwnerTextBox"
+                    Header="Propietario *"
+                    PlaceholderText="Ingrese el nombre del propietario"/>
+
+                <TextBox
+                    x:Name="DescriptionTextBox"
+                    Header="Descripcion"
+                    PlaceholderText="Descripcion de la empresa (opcional)"
+                    TextWrapping="Wrap"
+                    AcceptsReturn="True"
+                    Height="100"/>
+
+                <!-- Direccion -->
+                <TextBlock Text="Direccion" FontWeight="SemiBold" FontSize="16" Margin="0,16,0,0"/>
+
+                <TextBox
+                    x:Name="Address1TextBox"
+                    Header="Direccion 1"
+                    PlaceholderText="Direccion principal"/>
+
+                <TextBox
+                    x:Name="Address2TextBox"
+                    Header="Direccion 2"
+                    PlaceholderText="Direccion secundaria (opcional)"/>
+
+                <!-- Contacto -->
+                <TextBlock Text="Informacion de Contacto" FontWeight="SemiBold" FontSize="16" Margin="0,16,0,0"/>
+
+                <TextBox
+                    x:Name="EmailTextBox"
+                    Header="Correo Electronico"
+                    PlaceholderText="ejemplo@empresa.com"
+                    InputScope="EmailNameOrAddress"/>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox
+                        x:Name="PhoneNumber1TextBox"
+                        Grid.Column="0"
+                        Header="Telefono 1"
+                        PlaceholderText="+504 0000-0000"
+                        InputScope="TelephoneNumber"/>
+
+                    <TextBox
+                        x:Name="PhoneNumber2TextBox"
+                        Grid.Column="2"
+                        Header="Telefono 2"
+                        PlaceholderText="+504 0000-0000 (opcional)"
+                        InputScope="TelephoneNumber"/>
+                </Grid>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer with Actions -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,24,0,0">
+            <ProgressRing
+                x:Name="LoadingRing"
+                IsActive="False"
+                Width="24"
+                Height="24"/>
+
+            <Button
+                x:Name="SaveButton"
+                Content="Guardar"
+                Style="{StaticResource AccentButtonStyle}"
+                Click="SaveButton_Click"
+                MinWidth="120"/>
+        </StackPanel>
+    </Grid>
+</Page>

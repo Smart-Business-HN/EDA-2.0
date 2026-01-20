@@ -43,8 +43,19 @@ namespace EDA_2._0.Views
             {
                 var tag = selectedItem.Tag?.ToString();
 
-                // Navegar a la pagina correspondiente segun el tag
-                // TODO: Implementar navegacion a cada pagina cuando se creen
+                switch (tag)
+                {
+                    case "empresa":
+                        ContentFrame.Navigate(typeof(CompanyPage));
+                        break;
+                    case "usuarios":
+                        ContentFrame.Navigate(typeof(UsersPage));
+                        break;
+                    case "familias":
+                        ContentFrame.Navigate(typeof(FamiliesPage));
+                        break;
+                    // TODO: Implementar navegacion a otras paginas cuando se creen
+                }
             }
         }
 
