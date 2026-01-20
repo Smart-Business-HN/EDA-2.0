@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "EDA 2.0 (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "EDA 2.0 (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

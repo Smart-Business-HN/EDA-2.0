@@ -1,0 +1,17 @@
+<Solution>
+  <Configurations>
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="EDA 2.0/EDA.PRESENTATION.csproj">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+    <Deploy />
+  </Project>
+  <Project Path="EDA.APPLICATION/EDA.APPLICATION.csproj" />
+  <Project Path="EDA.DOMAIN/EDA.DOMAIN.csproj" />
+  <Project Path="EDA.INFRAESTRUCTURE/EDA.INFRAESTRUCTURE.csproj" />
+  <Project Path="EDA.MIGRATIONS/EDA.MIGRATIONS.csproj" />
+</Solution>

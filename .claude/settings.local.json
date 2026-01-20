@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet run:*)",
+      "Bash(ls -la \"c:\\\\Repos\\\\EDA 2.0\\\\Views\"\" 2>&1 || echo \"Directory not found, checking alternatives... \")"
+    ]
+  }
+}
