@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="EDA_2._0.Views.DiscountsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EDA_2._0.Views"
+    xmlns:converters="using:EDA_2._0.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent"
+    Loaded="Page_Loaded">
+
+    <Page.Resources>
+        <converters:PercentageConverter x:Key="PercentageConverter"/>
+    </Page.Resources>
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock
+                Text="Descuentos"
+                FontSize="28"
+                FontWeight="SemiBold"/>
+            <TextBlock
+                Text="Gestionar los descuentos disponibles"
+                FontSize="14"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Toolbar: Search + New Discount Button -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MaxWidth="400"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                x:Name="SearchTextBox"
+                Grid.Column="0"
+                PlaceholderText="Buscar por nombre..."
+                KeyDown="SearchTextBox_KeyDown"/>
+
+            <Button
+                x:Name="NewDiscountButton"
+                Grid.Column="1"
+                Content="+ Nuevo Descuento"
+                Style="{StaticResource AccentButtonStyle}"
+                Click="NewDiscountButton_Click"
+                Margin="12,0,0,0"/>
+        </Grid>
+
+        <!-- Discounts List -->
+        <ListView
+            x:Name="DiscountsListView"
+            Grid.Row="2"
+            SelectionMode="None">
+            <ListView.Header>
+                <Grid Padding="12,8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="Auto" MinWidth="180"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Nombre" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Text="Porcentaje" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="Acciones" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                </Grid>
+            </ListView.Header>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="12,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="Auto" MinWidth="180"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Percentage, Converter={StaticResource PercentageConverter}}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <Button
+                                Content="Editar"
+                                Click="EditButton_Click"
+                                Tag="{Binding}"/>
+                            <Button
+                                Content="Eliminar"
+                                Click="DeleteButton_Click"
+                                Tag="{Binding}"/>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Footer: Pagination + Loading -->
+        <Grid Grid.Row="3" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Pagination -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                <Button
+                    x:Name="PreviousPageButton"
+                    Content="&lt; Anterior"
+                    Click="PreviousPageButton_Click"
+                    IsEnabled="False"/>
+                <TextBlock
+                    x:Name="PageInfoText"
+                    Text="Página 1 de 1"
+                    VerticalAlignment="Center"
+                    Margin="8,0"/>
+                <Button
+                    x:Name="NextPageButton"
+                    Content="Siguiente &gt;"
+                    Click="NextPageButton_Click"
+                    IsEnabled="False"/>
+            </StackPanel>
+
+            <!-- Loading -->
+            <ProgressRing
+                x:Name="LoadingRing"
+                Grid.Column="1"
+                IsActive="False"
+                Width="24"
+                Height="24"/>
+        </Grid>
+    </Grid>
+</Page>

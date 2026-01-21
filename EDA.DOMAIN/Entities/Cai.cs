@@ -13,7 +13,8 @@ namespace EDA.DOMAIN.Entities
         public DateTime ToDate { get; set; }
         public int InitialCorrelative { get; set; }
         public int FinalCorrelative { get; set; }
-        public int PendingInvoices {get; set;}
+        public int CurrentCorrelative { get; set; }
+        public int PendingInvoices { get; set; }
         public string Prefix { get; set; } = null!;
         public bool IsActive { get; set; }
     }

@@ -57,6 +57,21 @@ namespace EDA_2._0.Views
                     case "tipospago":
                         ContentFrame.Navigate(typeof(PaymentTypesPage));
                         break;
+                    case "descuentos":
+                        ContentFrame.Navigate(typeof(DiscountsPage));
+                        break;
+                    case "impuestos":
+                        ContentFrame.Navigate(typeof(TaxesPage));
+                        break;
+                    case "clientes":
+                        ContentFrame.Navigate(typeof(CustomersPage));
+                        break;
+                    case "productos":
+                        ContentFrame.Navigate(typeof(ProductsPage));
+                        break;
+                    case "cais":
+                        ContentFrame.Navigate(typeof(CaisPage));
+                        break;
                     // TODO: Implementar navegacion a otras paginas cuando se creen
                 }
             }
