@@ -6,7 +6,10 @@
       "Bash(dotnet build:*)",
       "Bash(dotnet run:*)",
       "Bash(ls -la \"c:\\\\Repos\\\\EDA 2.0\\\\Views\"\" 2>&1 || echo \"Directory not found, checking alternatives... \")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(dotnet ef database update:*)",
+      "Bash(dotnet tool install:*)",
+      "Bash(dotnet ef migrations:*)"
     ]
   }
 }

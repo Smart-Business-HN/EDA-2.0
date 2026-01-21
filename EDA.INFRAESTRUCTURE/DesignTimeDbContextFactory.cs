@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
 
 namespace EDA.INFRAESTRUCTURE
 {
@@ -7,8 +8,15 @@ namespace EDA.INFRAESTRUCTURE
     {
         public DatabaseContext CreateDbContext(string[] args)
         {
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "..", "EDA 2.0"))
+                .AddJsonFile("appsettings.json", optional: false)
+                .Build();
+
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+
             var optionsBuilder = new DbContextOptionsBuilder<DatabaseContext>();
-            optionsBuilder.UseSqlServer("Server=localhost;Database=eda_db;User Id=root;Password=SomeThingComplicated1234;TrustServerCertificate=True;");
+            optionsBuilder.UseSqlServer(connectionString);
 
             return new DatabaseContext(optionsBuilder.Options);
         }
