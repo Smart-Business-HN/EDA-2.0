@@ -207,6 +207,9 @@ namespace EDA.INFRAESTRUCTURE
                     Name = "Consumidor Final"
                 }
             );
+            modelBuilder.Entity<PaymentType>().HasData(
+                new PaymentType { Id = 1, Name = "Efectivo" }
+            );
 
             // Impuestos de Honduras
             modelBuilder.Entity<Tax>().HasData(

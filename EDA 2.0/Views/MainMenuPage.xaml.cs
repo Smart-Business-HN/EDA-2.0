@@ -54,6 +54,9 @@ namespace EDA_2._0.Views
                     case "familias":
                         ContentFrame.Navigate(typeof(FamiliesPage));
                         break;
+                    case "tipospago":
+                        ContentFrame.Navigate(typeof(PaymentTypesPage));
+                        break;
                     // TODO: Implementar navegacion a otras paginas cuando se creen
                 }
             }
