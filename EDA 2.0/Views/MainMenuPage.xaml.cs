@@ -45,6 +45,9 @@ namespace EDA_2._0.Views
 
                 switch (tag)
                 {
+                    case "pos":
+                        ContentFrame.Navigate(typeof(POSPage));
+                        break;
                     case "empresa":
                         ContentFrame.Navigate(typeof(CompanyPage));
                         break;

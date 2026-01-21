@@ -9,6 +9,7 @@ namespace EDA.APPLICATION.Features.CustomerFeature.Commands.CreateCustomerComman
     public class CreateCustomerCommand : IRequest<Result<Customer>>
     {
         public string Name { get; set; } = null!;
+        public string? RTN { get; set; }
         public string? Company { get; set; }
         public string? Email { get; set; }
         public string? PhoneNumber { get; set; }
@@ -39,6 +40,7 @@ namespace EDA.APPLICATION.Features.CustomerFeature.Commands.CreateCustomerComman
             var newCustomer = new Customer
             {
                 Name = request.Name,
+                RTN = request.RTN,
                 Company = request.Company,
                 Email = request.Email,
                 PhoneNumber = request.PhoneNumber,

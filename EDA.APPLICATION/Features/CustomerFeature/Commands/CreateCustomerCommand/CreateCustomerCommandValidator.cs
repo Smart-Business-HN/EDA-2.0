@@ -10,6 +10,10 @@ namespace EDA.APPLICATION.Features.CustomerFeature.Commands.CreateCustomerComman
                 .NotEmpty().WithMessage("El nombre del cliente no puede estar vacío.")
                 .MaximumLength(100).WithMessage("El nombre del cliente no puede exceder los 100 caracteres.");
 
+            RuleFor(x => x.RTN)
+                .MaximumLength(20).WithMessage("El RTN no puede exceder los 20 caracteres.")
+                .When(x => !string.IsNullOrEmpty(x.RTN));
+
             RuleFor(x => x.Company)
                 .MaximumLength(100).WithMessage("El nombre de la empresa no puede exceder los 100 caracteres.")
                 .When(x => !string.IsNullOrEmpty(x.Company));

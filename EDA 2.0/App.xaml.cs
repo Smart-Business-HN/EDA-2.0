@@ -1,6 +1,7 @@
 using EDA.APPLICATION;
 using EDA.DOMAIN.Entities;
 using EDA.INFRAESTRUCTURE;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -46,6 +47,13 @@ namespace EDA_2._0
 
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
+            // Aplicar migraciones pendientes automáticamente
+            using (var scope = Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                dbContext.Database.Migrate();
+            }
+
             _mainWindow = new MainWindow();
             _mainWindow.Activate();
         }

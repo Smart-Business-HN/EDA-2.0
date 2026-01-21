@@ -134,6 +134,15 @@ namespace EDA_2._0.Views
                 Margin = new Thickness(0, 0, 0, 12)
             };
 
+            var rtnTextBox = new TextBox
+            {
+                Header = "RTN",
+                PlaceholderText = "Ingrese el RTN (opcional)",
+                Text = customer?.RTN ?? string.Empty,
+                Margin = new Thickness(0, 0, 0, 12),
+                MaxLength = 20
+            };
+
             var companyTextBox = new TextBox
             {
                 Header = "Empresa",
@@ -171,7 +180,7 @@ namespace EDA_2._0.Views
             var content = new StackPanel
             {
                 Width = 400,
-                Children = { nameTextBox, companyTextBox, emailTextBox, phoneTextBox, descriptionTextBox }
+                Children = { nameTextBox, rtnTextBox, companyTextBox, emailTextBox, phoneTextBox, descriptionTextBox }
             };
 
             var dialog = new ContentDialog
@@ -191,6 +200,7 @@ namespace EDA_2._0.Views
                 await SaveCustomer(
                     customer?.Id,
                     nameTextBox.Text?.Trim() ?? string.Empty,
+                    rtnTextBox.Text?.Trim(),
                     companyTextBox.Text?.Trim(),
                     emailTextBox.Text?.Trim(),
                     phoneTextBox.Text?.Trim(),
@@ -199,7 +209,7 @@ namespace EDA_2._0.Views
             }
         }
 
-        private async Task SaveCustomer(int? id, string name, string? company, string? email, string? phoneNumber, string? description, bool isEdit)
+        private async Task SaveCustomer(int? id, string name, string? rtn, string? company, string? email, string? phoneNumber, string? description, bool isEdit)
         {
             SetLoading(true);
 
@@ -211,6 +221,7 @@ namespace EDA_2._0.Views
                     {
                         Id = id.Value,
                         Name = name,
+                        RTN = string.IsNullOrWhiteSpace(rtn) ? null : rtn,
                         Company = string.IsNullOrWhiteSpace(company) ? null : company,
                         Email = string.IsNullOrWhiteSpace(email) ? null : email,
                         PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber,
@@ -234,6 +245,7 @@ namespace EDA_2._0.Views
                     var command = new CreateCustomerCommand
                     {
                         Name = name,
+                        RTN = string.IsNullOrWhiteSpace(rtn) ? null : rtn,
                         Company = string.IsNullOrWhiteSpace(company) ? null : company,
                         Email = string.IsNullOrWhiteSpace(email) ? null : email,
                         PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber,

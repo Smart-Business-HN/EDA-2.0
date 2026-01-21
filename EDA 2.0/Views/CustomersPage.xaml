@@ -62,16 +62,18 @@
                 <Grid Padding="12,8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="140"/>
                         <ColumnDefinition Width="150"/>
-                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="180"/>
                         <ColumnDefinition Width="120"/>
                         <ColumnDefinition Width="Auto" MinWidth="180"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Nombre" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Column="1" Text="Empresa" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Column="2" Text="Email" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Column="3" Text="Telefono" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Column="4" Text="Acciones" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="RTN" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="2" Text="Empresa" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="3" Text="Email" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="4" Text="Telefono" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="5" Text="Acciones" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                 </Grid>
             </ListView.Header>
             <ListView.ItemTemplate>
@@ -79,16 +81,18 @@
                     <Grid Padding="12,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="140"/>
                             <ColumnDefinition Width="150"/>
-                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="180"/>
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="Auto" MinWidth="180"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Grid.Column="1" Text="{Binding Company}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Grid.Column="2" Text="{Binding Email}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Grid.Column="3" Text="{Binding PhoneNumber}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                        <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                        <TextBlock Grid.Column="1" Text="{Binding RTN}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Company}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="3" Text="{Binding Email}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="4" Text="{Binding PhoneNumber}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
                             <Button
                                 Content="Editar"
                                 Click="EditButton_Click"

@@ -1,5 +1,7 @@
+using EDA.APPLICATION.Interfaces;
 using EDA.APPLICATION.Repository;
 using EDA.INFRAESTRUCTURE.Repository;
+using EDA.INFRAESTRUCTURE.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +19,9 @@ namespace EDA.INFRAESTRUCTURE
                 options.UseSqlServer(connectionString));
 
             services.AddScoped(typeof(IRepositoryAsync<>), typeof(CustomRepositoryAsync<>));
+
+            // Servicios de PDF
+            services.AddTransient<IInvoicePdfService, InvoicePdfService>();
 
             return services;
         }

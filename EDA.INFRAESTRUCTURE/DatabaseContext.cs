@@ -52,6 +52,7 @@ namespace EDA.INFRAESTRUCTURE
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.RTN).HasMaxLength(20);
                 entity.Property(e => e.Company).HasMaxLength(200);
                 entity.Property(e => e.Email).HasMaxLength(150);
                 entity.Property(e => e.PhoneNumber).HasMaxLength(20);
@@ -135,6 +136,11 @@ namespace EDA.INFRAESTRUCTURE
                 entity.Property(e => e.InvoiceNumber).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Subtotal).HasPrecision(18, 2);
                 entity.Property(e => e.Total).HasPrecision(18, 2);
+                entity.Property(e => e.TaxedAt15Percent).HasPrecision(18, 2);
+                entity.Property(e => e.TaxesAt15Percent).HasPrecision(18, 2);
+                entity.Property(e => e.TaxedAt18Percent).HasPrecision(18, 2);
+                entity.Property(e => e.TaxesAt18Percent).HasPrecision(18, 2);
+                entity.Property(e => e.Exempt).HasPrecision(18, 2);
                 entity.HasOne(e => e.Customer)
                       .WithMany()
                       .HasForeignKey(e => e.CustomerId)

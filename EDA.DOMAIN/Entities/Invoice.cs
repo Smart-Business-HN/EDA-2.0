@@ -19,6 +19,14 @@
         public double TotalDiscounts { get; set; }
         public double TotalTaxes { get; set; }
         public decimal Total { get; set; }
+
+        // Desglose de impuestos
+        public decimal TaxedAt15Percent { get; set; }    // Base gravada al 15%
+        public decimal TaxesAt15Percent { get; set; }    // Impuesto al 15%
+        public decimal TaxedAt18Percent { get; set; }    // Base gravada al 18%
+        public decimal TaxesAt18Percent { get; set; }    // Impuesto al 18%
+        public decimal Exempt { get; set; }               // Total exento
+
         public List<SoldProduct>? SoldProducts { get; set; }
         public List<InvoicePayment>? InvoicePayments { get; set; }
     }

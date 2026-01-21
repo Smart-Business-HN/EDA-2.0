@@ -10,6 +10,7 @@ namespace EDA.APPLICATION.Features.CustomerFeature.Commands.UpdateCustomerComman
     {
         public int Id { get; set; }
         public string Name { get; set; } = null!;
+        public string? RTN { get; set; }
         public string? Company { get; set; }
         public string? Email { get; set; }
         public string? PhoneNumber { get; set; }
@@ -45,6 +46,7 @@ namespace EDA.APPLICATION.Features.CustomerFeature.Commands.UpdateCustomerComman
             }
 
             customer.Name = request.Name;
+            customer.RTN = request.RTN;
             customer.Company = request.Company;
             customer.Email = request.Email;
             customer.PhoneNumber = request.PhoneNumber;
