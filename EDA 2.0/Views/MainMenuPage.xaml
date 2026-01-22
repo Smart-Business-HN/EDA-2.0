@@ -18,6 +18,13 @@
                         ItemInvoked="NavigationView_ItemInvoked">
 
             <NavigationView.MenuItems>
+                <!-- Dashboard (solo Admin) -->
+                <NavigationViewItem x:Name="NavDashboard" Content="Dashboard" Tag="dashboard">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE9F9;"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
                 <!-- Operaciones -->
                 <NavigationViewItemHeader Content="Operaciones"/>
                 <NavigationViewItem x:Name="NavPOS" Content="POS" Tag="pos">

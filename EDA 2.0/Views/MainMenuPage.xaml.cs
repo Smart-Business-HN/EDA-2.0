@@ -24,6 +24,7 @@ namespace EDA_2._0.Views
             {
                 // Cajero solo tiene acceso a: POS, Clientes, Productos
                 // Ocultar items no permitidos
+                NavDashboard.Visibility = Visibility.Collapsed;
                 NavFamilias.Visibility = Visibility.Collapsed;
                 NavImpuestos.Visibility = Visibility.Collapsed;
                 NavDescuentos.Visibility = Visibility.Collapsed;
@@ -45,6 +46,9 @@ namespace EDA_2._0.Views
 
                 switch (tag)
                 {
+                    case "dashboard":
+                        ContentFrame.Navigate(typeof(DashboardPage));
+                        break;
                     case "pos":
                         ContentFrame.Navigate(typeof(POSPage));
                         break;
