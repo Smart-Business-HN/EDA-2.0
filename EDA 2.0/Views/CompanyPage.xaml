@@ -33,8 +33,62 @@
         <!-- Content -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Spacing="16" MaxWidth="600" HorizontalAlignment="Left">
+                <!-- Logo de la Empresa -->
+                <TextBlock Text="Logo de la Empresa" FontWeight="SemiBold" FontSize="16"/>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border
+                        Grid.Column="0"
+                        Width="120"
+                        Height="120"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                        <Grid>
+                            <FontIcon
+                                x:Name="LogoPlaceholderIcon"
+                                Glyph="&#xE77B;"
+                                FontSize="48"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"/>
+                            <Image
+                                x:Name="LogoPreviewImage"
+                                Stretch="Uniform"
+                                Margin="8"
+                                Visibility="Collapsed"/>
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center" Spacing="8">
+                        <Button
+                            x:Name="SelectLogoButton"
+                            Content="Seleccionar Logo"
+                            Click="SelectLogoButton_Click"/>
+                        <Button
+                            x:Name="RemoveLogoButton"
+                            Content="Eliminar Logo"
+                            Click="RemoveLogoButton_Click"
+                            Visibility="Collapsed"/>
+                        <TextBlock
+                            Text="Formatos soportados: PNG, JPG, JPEG"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <TextBlock
+                            Text="Recomendado: 200x200 px"
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                </Grid>
+
                 <!-- Informacion Basica -->
-                <TextBlock Text="Informacion Basica" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="Informacion Basica" FontWeight="SemiBold" FontSize="16" Margin="0,16,0,0"/>
 
                 <TextBox
                     x:Name="NameTextBox"
@@ -45,6 +99,12 @@
                     x:Name="OwnerTextBox"
                     Header="Propietario *"
                     PlaceholderText="Ingrese el nombre del propietario"/>
+
+                <TextBox
+                    x:Name="RtnTextBox"
+                    Header="RTN"
+                    PlaceholderText="0801-0000-00000"
+                    MaxLength="20"/>
 
                 <TextBox
                     x:Name="DescriptionTextBox"

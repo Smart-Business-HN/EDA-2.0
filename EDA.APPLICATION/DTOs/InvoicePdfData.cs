@@ -13,6 +13,7 @@ namespace EDA.APPLICATION.DTOs
         public string? CompanyRtn { get; set; }
         public string? CompanyPhone { get; set; }
         public string? CompanyEmail { get; set; }
+        public byte[]? CompanyLogo { get; set; }
 
         // Datos de la Factura
         public string InvoiceNumber { get; set; } = string.Empty;

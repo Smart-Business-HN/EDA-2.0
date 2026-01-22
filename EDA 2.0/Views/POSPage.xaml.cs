@@ -826,10 +826,12 @@ namespace EDA_2._0.Views
                     // Datos de la empresa
                     CompanyName = company.Name,
                     CompanyOwner = company.Owner,
+                    CompanyRtn = company.RTN,
                     CompanyAddress1 = company.Address1,
                     CompanyAddress2 = company.Address2,
                     CompanyPhone = company.PhoneNumber1,
                     CompanyEmail = company.Email,
+                    CompanyLogo = company.Logo,
 
                     // Datos de la factura
                     InvoiceNumber = invoice.InvoiceNumber,

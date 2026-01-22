@@ -65,12 +65,14 @@ namespace EDA.INFRAESTRUCTURE
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Owner).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.RTN).HasMaxLength(20);
                 entity.Property(e => e.Address1).HasMaxLength(300);
                 entity.Property(e => e.Address2).HasMaxLength(300);
                 entity.Property(e => e.Email).HasMaxLength(150);
                 entity.Property(e => e.PhoneNumber1).HasMaxLength(20);
                 entity.Property(e => e.PhoneNumber2).HasMaxLength(20);
                 entity.Property(e => e.Description).HasMaxLength(500);
+                entity.Property(e => e.Logo).HasColumnType("varbinary(max)");
             });
 
             // Family

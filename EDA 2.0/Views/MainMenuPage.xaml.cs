@@ -75,7 +75,9 @@ namespace EDA_2._0.Views
                     case "cais":
                         ContentFrame.Navigate(typeof(CaisPage));
                         break;
-                    // TODO: Implementar navegacion a otras paginas cuando se creen
+                    case "facturas":
+                        ContentFrame.Navigate(typeof(InvoicesPage));
+                        break;
                 }
             }
         }
@@ -110,6 +112,20 @@ namespace EDA_2._0.Views
         {
             App.CurrentUser = null;
             App.MainWindow.NavigateToPage(typeof(LoginPage));
+        }
+
+        public void NavigateToInvoiceDetail(int invoiceId)
+        {
+            var detailPage = new InvoiceDetailPage();
+            detailPage.SetInvoiceId(invoiceId);
+            ContentFrame.Navigate(typeof(InvoiceDetailPage), invoiceId);
+            ContentFrame.Content = detailPage;
+        }
+
+        public void NavigateToInvoices()
+        {
+            ContentFrame.Navigate(typeof(InvoicesPage));
+            NavView.SelectedItem = NavFacturas;
         }
     }
 }

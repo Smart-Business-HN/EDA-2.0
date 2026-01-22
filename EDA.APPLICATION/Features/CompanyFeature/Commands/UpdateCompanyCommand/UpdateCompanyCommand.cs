@@ -11,12 +11,14 @@ namespace EDA.APPLICATION.Features.CompanyFeature.Commands.UpdateCompanyCommand
         public int? Id { get; set; }
         public string Name { get; set; } = null!;
         public string Owner { get; set; } = null!;
+        public string? RTN { get; set; }
         public string? Address1 { get; set; }
         public string? Address2 { get; set; }
         public string? Email { get; set; }
         public string? PhoneNumber1 { get; set; }
         public string? PhoneNumber2 { get; set; }
         public string? Description { get; set; }
+        public byte[]? Logo { get; set; }
     }
 
     public class UpdateCompanyCommandHandler : IRequestHandler<UpdateCompanyCommand, Result<Company>>
@@ -38,12 +40,14 @@ namespace EDA.APPLICATION.Features.CompanyFeature.Commands.UpdateCompanyCommand
                 {
                     Name = request.Name,
                     Owner = request.Owner,
+                    RTN = request.RTN,
                     Address1 = request.Address1,
                     Address2 = request.Address2,
                     Email = request.Email,
                     PhoneNumber1 = request.PhoneNumber1,
                     PhoneNumber2 = request.PhoneNumber2,
-                    Description = request.Description
+                    Description = request.Description,
+                    Logo = request.Logo
                 };
 
                 await _repositoryAsync.AddAsync(newCompany, cancellationToken);
@@ -55,12 +59,14 @@ namespace EDA.APPLICATION.Features.CompanyFeature.Commands.UpdateCompanyCommand
             {
                 existingCompany.Name = request.Name;
                 existingCompany.Owner = request.Owner;
+                existingCompany.RTN = request.RTN;
                 existingCompany.Address1 = request.Address1;
                 existingCompany.Address2 = request.Address2;
                 existingCompany.Email = request.Email;
                 existingCompany.PhoneNumber1 = request.PhoneNumber1;
                 existingCompany.PhoneNumber2 = request.PhoneNumber2;
                 existingCompany.Description = request.Description;
+                existingCompany.Logo = request.Logo;
 
                 await _repositoryAsync.UpdateAsync(existingCompany, cancellationToken);
                 await _repositoryAsync.SaveChangesAsync(cancellationToken);

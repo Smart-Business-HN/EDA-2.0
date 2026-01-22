@@ -16,5 +16,22 @@ namespace EDA_2._0
         {
             ContentFrame.Navigate(pageType);
         }
+
+        public void NavigateToInvoiceDetail(int invoiceId)
+        {
+            // Navegar a través del MainMenuPage si está activo
+            if (ContentFrame.Content is MainMenuPage mainMenuPage)
+            {
+                mainMenuPage.NavigateToInvoiceDetail(invoiceId);
+            }
+        }
+
+        public void NavigateToInvoices()
+        {
+            if (ContentFrame.Content is MainMenuPage mainMenuPage)
+            {
+                mainMenuPage.NavigateToInvoices();
+            }
+        }
     }
 }

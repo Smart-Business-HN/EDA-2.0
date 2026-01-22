@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="EDA_2._0.Views.InvoicesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EDA_2._0.Views"
+    xmlns:converters="using:EDA_2._0.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent"
+    Loaded="Page_Loaded">
+
+    <Page.Resources>
+        <converters:DateConverter x:Key="DateFormatConverter"/>
+        <converters:CurrencyConverter x:Key="CurrencyConverter"/>
+    </Page.Resources>
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock
+                Text="Facturas"
+                FontSize="28"
+                FontWeight="SemiBold"/>
+            <TextBlock
+                Text="Consultar y gestionar las facturas emitidas"
+                FontSize="14"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Filters -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- First Row of Filters -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="300"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox
+                    x:Name="SearchTextBox"
+                    Grid.Column="0"
+                    PlaceholderText="Busqueda general..."
+                    KeyDown="SearchTextBox_KeyDown"/>
+
+                <DatePicker
+                    x:Name="FromDatePicker"
+                    Grid.Column="1"
+                    Header="Desde"
+                    Margin="12,0,0,0"/>
+
+                <DatePicker
+                    x:Name="ToDatePicker"
+                    Grid.Column="2"
+                    Header="Hasta"
+                    Margin="12,0,0,0"/>
+
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Bottom">
+                    <Button
+                        x:Name="SearchButton"
+                        Content="Buscar"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Click="SearchButton_Click"/>
+                    <Button
+                        x:Name="ClearButton"
+                        Content="Limpiar"
+                        Click="ClearButton_Click"
+                        Margin="8,0,0,0"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Second Row of Filters (Collapsible) -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="200"/>
+                    <ColumnDefinition Width="*" MaxWidth="200"/>
+                    <ColumnDefinition Width="*" MaxWidth="200"/>
+                    <ColumnDefinition Width="*" MaxWidth="200"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox
+                    x:Name="CustomerRtnTextBox"
+                    Grid.Column="0"
+                    PlaceholderText="RTN del cliente..."
+                    Margin="0,0,8,0"/>
+
+                <TextBox
+                    x:Name="CustomerNameTextBox"
+                    Grid.Column="1"
+                    PlaceholderText="Nombre del cliente..."
+                    Margin="8,0,8,0"/>
+
+                <TextBox
+                    x:Name="InvoiceNumberTextBox"
+                    Grid.Column="2"
+                    PlaceholderText="Numero de factura..."
+                    Margin="8,0,8,0"/>
+
+                <TextBox
+                    x:Name="UserNameTextBox"
+                    Grid.Column="3"
+                    PlaceholderText="Usuario..."
+                    Margin="8,0,0,0"/>
+            </Grid>
+        </Grid>
+
+        <!-- Invoices List -->
+        <ListView
+            x:Name="InvoicesListView"
+            Grid.Row="2"
+            SelectionMode="None">
+            <ListView.Header>
+                <Grid Padding="12,8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140"/>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="Auto" MinWidth="100"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="# Factura" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Text="Fecha" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="2" Text="Cliente" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="3" Text="RTN Cliente" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="4" Text="Usuario" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="5" Text="Total" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Column="6" Text="Acciones" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                </Grid>
+            </ListView.Header>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="12,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="Auto" MinWidth="100"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding InvoiceNumber}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Date, Converter={StaticResource DateFormatConverter}}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Customer.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="3" Text="{Binding Customer.RTN}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="4" Text="{Binding User.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="5" Text="{Binding Total, Converter={StaticResource CurrencyConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                        <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <Button
+                                Content="Ver"
+                                Click="ViewDetailButton_Click"
+                                Tag="{Binding}"/>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Footer: Pagination + Loading -->
+        <Grid Grid.Row="3" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Pagination -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                <Button
+                    x:Name="PreviousPageButton"
+                    Content="&lt; Anterior"
+                    Click="PreviousPageButton_Click"
+                    IsEnabled="False"/>
+                <TextBlock
+                    x:Name="PageInfoText"
+                    Text="Pagina 1 de 1"
+                    VerticalAlignment="Center"
+                    Margin="8,0"/>
+                <Button
+                    x:Name="NextPageButton"
+                    Content="Siguiente &gt;"
+                    Click="NextPageButton_Click"
+                    IsEnabled="False"/>
+            </StackPanel>
+
+            <!-- Loading -->
+            <ProgressRing
+                x:Name="LoadingRing"
+                Grid.Column="1"
+                IsActive="False"
+                Width="24"
+                Height="24"/>
+        </Grid>
+    </Grid>
+</Page>
