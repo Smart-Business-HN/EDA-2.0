@@ -18,7 +18,8 @@ namespace EDA.APPLICATION.Specifications.InvoiceSpecification
         {
             Query.Include(i => i.Customer)
                  .Include(i => i.User)
-                 .Include(i => i.Cai);
+                 .Include(i => i.Cai)
+                 .Include(i => i.Status);
 
             // Filtro por rango de fechas
             if (fromDate.HasValue)
@@ -166,6 +167,7 @@ namespace EDA.APPLICATION.Specifications.InvoiceSpecification
                  .Include(i => i.User)
                  .Include(i => i.Cai)
                  .Include(i => i.Discount)
+                 .Include(i => i.Status)
                  .Include(i => i.SoldProducts!)
                     .ThenInclude(sp => sp.Product)
                  .Include(i => i.SoldProducts!)

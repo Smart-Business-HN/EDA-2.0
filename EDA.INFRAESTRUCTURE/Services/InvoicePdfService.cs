@@ -65,6 +65,14 @@ namespace EDA.INFRAESTRUCTURE.Services
                         column.Item().AlignCenter().Text($"Fecha: {data.Date:dd/MM/yyyy HH:mm:ss}")
                             .FontSize(7);
 
+                        // === MARCA ANULADA ===
+                        if (data.IsVoided)
+                        {
+                            column.Item().PaddingVertical(3).Border(2).BorderColor(Colors.Black)
+                                .Padding(4).AlignCenter()
+                                .Text("*** FACTURA ANULADA ***").Bold().FontSize(10);
+                        }
+
                         // Línea separadora
                         column.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Colors.Black);
 
@@ -298,6 +306,14 @@ namespace EDA.INFRAESTRUCTURE.Services
                         col.Item().AlignRight().Text(data.InvoiceNumber).Bold().FontSize(12);
                         col.Item().AlignRight().Text($"Fecha: {data.Date:dd/MM/yyyy}").FontSize(10);
                         col.Item().AlignRight().Text($"Hora: {data.Date:HH:mm:ss}").FontSize(10);
+
+                        // Marca ANULADA
+                        if (data.IsVoided)
+                        {
+                            col.Item().PaddingTop(5).Border(2).BorderColor(Colors.Black)
+                                .Padding(5).AlignCenter()
+                                .Text("ANULADA").Bold().FontSize(14);
+                        }
                     });
                 });
 

@@ -847,6 +847,7 @@ namespace EDA_2._0.Views
                     Exempt = invoice.Exempt,
                     CashReceived = invoice.CashReceived,
                     ChangeGiven = invoice.ChangeGiven,
+                    IsVoided = false, // Facturas nuevas desde POS nunca están anuladas
 
                     // Datos del cliente
                     CustomerName = customer.Name,

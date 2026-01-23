@@ -1,14 +1,19 @@
 using EDA.APPLICATION.DTOs;
+using EDA.APPLICATION.Features.InvoiceFeature.Commands.AddPaymentToInvoiceCommand;
+using EDA.APPLICATION.Features.InvoiceFeature.Commands.VoidInvoiceCommand;
 using EDA.APPLICATION.Features.InvoiceFeature.Queries.GetInvoiceByIdQuery;
 using EDA.APPLICATION.Interfaces;
 using EDA.DOMAIN.Entities;
+using EDA.DOMAIN.Enums;
 using EDA.INFRAESTRUCTURE;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -76,6 +81,9 @@ namespace EDA_2._0.Views
             InvoiceNumberText.Text = $"Factura #{_invoice.InvoiceNumber}";
             InvoiceDateText.Text = $"Fecha: {_invoice.Date:dd/MM/yyyy HH:mm:ss}";
 
+            // Status Badge
+            UpdateStatusBadge();
+
             // Customer Info
             CustomerNameText.Text = _invoice.Customer?.Name ?? "-";
             CustomerRtnText.Text = _invoice.Customer?.RTN ?? "-";
@@ -110,6 +118,213 @@ namespace EDA_2._0.Views
         {
             var mainWindow = App.MainWindow as MainWindow;
             mainWindow?.NavigateToInvoices();
+        }
+
+        private void UpdateStatusBadge()
+        {
+            if (_invoice == null) return;
+
+            var statusId = (InvoiceStatusEnum)_invoice.StatusId;
+            string statusName = _invoice.Status?.Name ?? statusId.ToString();
+
+            StatusText.Text = statusName.ToUpper();
+
+            switch (statusId)
+            {
+                case InvoiceStatusEnum.Creada:
+                    StatusBadge.Background = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 52, 152, 219)); // Azul
+                    break;
+                case InvoiceStatusEnum.Pagada:
+                    StatusBadge.Background = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 39, 174, 96)); // Verde
+                    break;
+                case InvoiceStatusEnum.Anulada:
+                    StatusBadge.Background = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 231, 76, 60)); // Rojo
+                    break;
+                default:
+                    StatusBadge.Background = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 127, 140, 141)); // Gris
+                    break;
+            }
+
+            // Ocultar botón de anular si ya está anulada
+            VoidInvoiceButton.Visibility = statusId == InvoiceStatusEnum.Anulada
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+
+            // Mostrar botón de agregar pago solo si está en estado Creada
+            AddPaymentButton.Visibility = statusId == InvoiceStatusEnum.Creada
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+
+        private async void VoidInvoiceButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_invoice == null) return;
+
+            // Confirmar anulación
+            var confirmDialog = new ContentDialog
+            {
+                Title = "Anular Factura",
+                Content = $"¿Está seguro que desea anular la factura #{_invoice.InvoiceNumber}?\n\nEsta acción no se puede deshacer.",
+                PrimaryButtonText = "Anular",
+                CloseButtonText = "Cancelar",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await confirmDialog.ShowAsync();
+
+            if (result != ContentDialogResult.Primary)
+                return;
+
+            SetLoading(true);
+
+            try
+            {
+                var voidResult = await _mediator.Send(new VoidInvoiceCommand { InvoiceId = _invoice.Id });
+
+                if (voidResult.Succeeded)
+                {
+                    // Actualizar estado local
+                    _invoice.StatusId = (int)InvoiceStatusEnum.Anulada;
+                    UpdateStatusBadge();
+
+                    var successDialog = new ContentDialog
+                    {
+                        Title = "Factura Anulada",
+                        Content = "La factura ha sido anulada correctamente.",
+                        CloseButtonText = "Aceptar",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await successDialog.ShowAsync();
+                }
+                else
+                {
+                    await ShowError(voidResult.Message ?? "Error al anular la factura");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowError($"Error: {ex.Message}");
+            }
+            finally
+            {
+                SetLoading(false);
+            }
+        }
+
+        private async void AddPaymentButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_invoice == null) return;
+
+            // Calcular monto pendiente
+            var totalPaid = _invoice.InvoicePayments?.Sum(p => p.Amount) ?? 0;
+            var pendingAmount = _invoice.Total - totalPaid;
+
+            // Obtener tipos de pago
+            var paymentTypes = await _dbContext.PaymentTypes.ToListAsync();
+
+            // Crear controles para el diálogo
+            var paymentTypeCombo = new ComboBox
+            {
+                ItemsSource = paymentTypes,
+                DisplayMemberPath = "Name",
+                SelectedValuePath = "Id",
+                PlaceholderText = "Seleccione tipo de pago",
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Margin = new Thickness(0, 0, 0, 12)
+            };
+            if (paymentTypes.Count > 0)
+                paymentTypeCombo.SelectedIndex = 0;
+
+            var amountBox = new NumberBox
+            {
+                Header = "Monto",
+                Value = (double)pendingAmount,
+                Minimum = 0.01,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            var pendingText = new TextBlock
+            {
+                Text = $"Pendiente: L {pendingAmount:N2}",
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                Margin = new Thickness(0, 0, 0, 12)
+            };
+
+            var contentPanel = new StackPanel
+            {
+                Children = { pendingText, paymentTypeCombo, amountBox }
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = "Agregar Pago",
+                Content = contentPanel,
+                PrimaryButtonText = "Agregar",
+                CloseButtonText = "Cancelar",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+
+            if (result != ContentDialogResult.Primary)
+                return;
+
+            if (paymentTypeCombo.SelectedValue == null)
+            {
+                await ShowError("Debe seleccionar un tipo de pago.");
+                return;
+            }
+
+            var paymentTypeId = (int)paymentTypeCombo.SelectedValue;
+            var amount = (decimal)amountBox.Value;
+
+            if (amount <= 0)
+            {
+                await ShowError("El monto debe ser mayor a cero.");
+                return;
+            }
+
+            SetLoading(true);
+
+            try
+            {
+                var addResult = await _mediator.Send(new AddPaymentToInvoiceCommand
+                {
+                    InvoiceId = _invoice.Id,
+                    PaymentTypeId = paymentTypeId,
+                    Amount = amount
+                });
+
+                if (addResult.Succeeded)
+                {
+                    // Recargar la factura para ver los cambios
+                    await LoadInvoice();
+
+                    var successDialog = new ContentDialog
+                    {
+                        Title = "Pago Agregado",
+                        Content = "El pago ha sido registrado correctamente.",
+                        CloseButtonText = "Aceptar",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await successDialog.ShowAsync();
+                }
+                else
+                {
+                    await ShowError(addResult.Message ?? "Error al agregar el pago");
+                }
+            }
+            catch (Exception ex)
+            {
+                await ShowError($"Error: {ex.Message}");
+            }
+            finally
+            {
+                SetLoading(false);
+            }
         }
 
         private async void PrintTicketButton_Click(object sender, RoutedEventArgs e)
@@ -170,6 +385,7 @@ namespace EDA_2._0.Views
                     Exempt = _invoice.Exempt,
                     CashReceived = _invoice.CashReceived,
                     ChangeGiven = _invoice.ChangeGiven,
+                    IsVoided = _invoice.StatusId == (int)InvoiceStatusEnum.Anulada,
 
                     // Datos del cliente
                     CustomerName = _invoice.Customer?.Name ?? "Cliente",
@@ -243,6 +459,8 @@ namespace EDA_2._0.Views
         private void SetLoading(bool isLoading)
         {
             LoadingRing.IsActive = isLoading;
+            AddPaymentButton.IsEnabled = !isLoading;
+            VoidInvoiceButton.IsEnabled = !isLoading;
             PrintTicketButton.IsEnabled = !isLoading;
             PrintLetterButton.IsEnabled = !isLoading;
         }

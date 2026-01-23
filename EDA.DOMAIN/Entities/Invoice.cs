@@ -27,6 +27,10 @@
         public decimal TaxesAt18Percent { get; set; }    // Impuesto al 18%
         public decimal Exempt { get; set; }               // Total exento
 
+        // Estado de la factura
+        public int StatusId { get; set; }
+        public InvoiceStatus? Status { get; set; }
+
         public List<SoldProduct>? SoldProducts { get; set; }
         public List<InvoicePayment>? InvoicePayments { get; set; }
     }

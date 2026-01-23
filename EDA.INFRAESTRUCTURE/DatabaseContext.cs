@@ -20,6 +20,7 @@ namespace EDA.INFRAESTRUCTURE
         public DbSet<Cai> Cais { get; set; }
         public DbSet<PaymentType> PaymentTypes { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<InvoiceStatus> InvoiceStatuses { get; set; }
         public DbSet<SoldProduct> SoldProducts { get; set; }
         public DbSet<InvoicePayment> InvoicePayments { get; set; }
 
@@ -131,6 +132,13 @@ namespace EDA.INFRAESTRUCTURE
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
             });
 
+            // InvoiceStatus
+            modelBuilder.Entity<InvoiceStatus>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+            });
+
             // Invoice
             modelBuilder.Entity<Invoice>(entity =>
             {
@@ -158,6 +166,10 @@ namespace EDA.INFRAESTRUCTURE
                 entity.HasOne(e => e.Discount)
                       .WithMany()
                       .HasForeignKey(e => e.DiscountId)
+                      .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Status)
+                      .WithMany()
+                      .HasForeignKey(e => e.StatusId)
                       .OnDelete(DeleteBehavior.Restrict);
                 entity.HasMany(e => e.SoldProducts)
                       .WithOne()
@@ -241,6 +253,13 @@ namespace EDA.INFRAESTRUCTURE
                     Password = "WakeUpNe0",
                     RoleId = 1
                 }
+            );
+
+            // Estados de Factura
+            modelBuilder.Entity<InvoiceStatus>().HasData(
+                new InvoiceStatus { Id = 1, Name = "Creada" },
+                new InvoiceStatus { Id = 2, Name = "Pagada" },
+                new InvoiceStatus { Id = 3, Name = "Anulada" }
             );
         }
     }

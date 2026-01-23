@@ -29,6 +29,7 @@ namespace EDA.APPLICATION.DTOs
         public decimal Exempt { get; set; }
         public double? CashReceived { get; set; }
         public double? ChangeGiven { get; set; }
+        public bool IsVoided { get; set; }
 
         // Datos del Cliente
         public string CustomerName { get; set; } = string.Empty;

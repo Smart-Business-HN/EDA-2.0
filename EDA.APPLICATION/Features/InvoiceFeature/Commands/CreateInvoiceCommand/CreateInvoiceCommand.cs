@@ -1,6 +1,7 @@
 using EDA.APPLICATION.Repository;
 using EDA.APPLICATION.Wrappers;
 using EDA.DOMAIN.Entities;
+using EDA.DOMAIN.Enums;
 using MediatR;
 
 namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
@@ -141,7 +142,13 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
                 }
             }
 
-            // 4. Crear entidad Invoice
+            // 4. Determinar estado de la factura
+            // Si tiene pagos = Pagada, si no tiene pagos = Creada
+            var statusId = request.Payments.Count > 0
+                ? (int)InvoiceStatusEnum.Pagada
+                : (int)InvoiceStatusEnum.Creada;
+
+            // 5. Crear entidad Invoice
             var invoice = new Invoice
             {
                 Date = request.Date,
@@ -150,6 +157,7 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
                 InvoiceNumber = invoiceNumber,
                 UserId = request.UserId,
                 DiscountId = request.DiscountId,
+                StatusId = statusId,
                 Subtotal = request.Subtotal,
                 TotalDiscounts = request.TotalDiscounts,
                 TotalTaxes = request.TotalTaxes,
@@ -163,11 +171,11 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
                 Exempt = exempt
             };
 
-            // 5. Agregar factura a la base de datos
+            // 6. Agregar factura a la base de datos
             await _invoiceRepository.AddAsync(invoice, cancellationToken);
             await _invoiceRepository.SaveChangesAsync(cancellationToken);
 
-            // 6. Crear registros SoldProduct
+            // 7. Crear registros SoldProduct
             foreach (var item in request.Items)
             {
                 decimal itemSubtotal = item.Quantity * item.UnitPrice;
@@ -194,7 +202,7 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
             }
             await _soldProductRepository.SaveChangesAsync(cancellationToken);
 
-            // 7. Crear registros InvoicePayment
+            // 8. Crear registros InvoicePayment
             foreach (var payment in request.Payments)
             {
                 var invoicePayment = new InvoicePayment
@@ -208,7 +216,7 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
             }
             await _paymentRepository.SaveChangesAsync(cancellationToken);
 
-            // 8. Actualizar CAI: CurrentCorrelative y PendingInvoices
+            // 9. Actualizar CAI: CurrentCorrelative y PendingInvoices
             cai.CurrentCorrelative++;
             cai.PendingInvoices--;
 
