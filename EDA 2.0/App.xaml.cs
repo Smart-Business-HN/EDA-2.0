@@ -20,6 +20,7 @@ namespace EDA_2._0
         public static IConfiguration Configuration => _configuration ?? throw new InvalidOperationException("Configuration not loaded");
         public static MainWindow MainWindow => _mainWindow ?? throw new InvalidOperationException("MainWindow not initialized");
         public static User? CurrentUser { get; set; }
+        public static Shift? CurrentShift { get; set; }
 
         public App()
         {

@@ -11,6 +11,7 @@ namespace EDA.APPLICATION.Specifications.CustomerSpecification
             {
                 Query.Where(customer =>
                     customer.Name.Contains(searchTerm) ||
+                    (customer.RTN != null && customer.RTN.Contains(searchTerm)) ||
                     (customer.Company != null && customer.Company.Contains(searchTerm)) ||
                     (customer.Email != null && customer.Email.Contains(searchTerm)) ||
                     (customer.PhoneNumber != null && customer.PhoneNumber.Contains(searchTerm)));
@@ -35,6 +36,7 @@ namespace EDA.APPLICATION.Specifications.CustomerSpecification
             {
                 Query.Where(customer =>
                     customer.Name.Contains(searchTerm) ||
+                    (customer.RTN != null && customer.RTN.Contains(searchTerm)) ||
                     (customer.Company != null && customer.Company.Contains(searchTerm)) ||
                     (customer.Email != null && customer.Email.Contains(searchTerm)) ||
                     (customer.PhoneNumber != null && customer.PhoneNumber.Contains(searchTerm)));

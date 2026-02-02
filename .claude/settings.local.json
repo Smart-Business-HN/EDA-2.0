@@ -15,7 +15,8 @@
       "Bash(dotnet clean:*)",
       "Bash(ls:*)",
       "Bash(.xaml.cs \")",
-      "Bash(dotnet add package:*)"
+      "Bash(dotnet add package:*)",
+      "Bash(tree:*)"
     ]
   }
 }

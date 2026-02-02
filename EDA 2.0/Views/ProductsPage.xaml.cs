@@ -164,6 +164,7 @@ namespace EDA_2._0.Views
             string? barcodeResult = null;
             decimal priceResult = 0;
             int stockResult = 0;
+            int minStockResult = 0;
             DateTime? dateResult = null;
 
             // Loop para manejar el caso de crear familia y volver al diálogo
@@ -203,6 +204,16 @@ namespace EDA_2._0.Views
                     Header = "Stock *",
                     PlaceholderText = "Ingrese el stock",
                     Value = shouldSave ? stockResult : (product?.Stock ?? 0),
+                    Minimum = 0,
+                    SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
+                    Margin = new Thickness(0, 0, 0, 12)
+                };
+
+                var minStockNumberBox = new NumberBox
+                {
+                    Header = "Stock Mínimo",
+                    PlaceholderText = "0 = sin mínimo",
+                    Value = shouldSave ? minStockResult : (product?.MinStock ?? 0),
                     Minimum = 0,
                     SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
                     Margin = new Thickness(0, 0, 0, 12)
@@ -290,7 +301,7 @@ namespace EDA_2._0.Views
                 var content = new StackPanel
                 {
                     Width = 400,
-                    Children = { nameTextBox, barcodeTextBox, priceNumberBox, stockNumberBox, familyPanel, taxComboBox, datePicker }
+                    Children = { nameTextBox, barcodeTextBox, priceNumberBox, stockNumberBox, minStockNumberBox, familyPanel, taxComboBox, datePicker }
                 };
 
                 mainDialog = new ContentDialog
@@ -310,6 +321,7 @@ namespace EDA_2._0.Views
                 barcodeResult = string.IsNullOrWhiteSpace(barcodeTextBox.Text) ? null : barcodeTextBox.Text.Trim();
                 priceResult = double.IsNaN(priceNumberBox.Value) ? 0 : (decimal)priceNumberBox.Value;
                 stockResult = double.IsNaN(stockNumberBox.Value) ? 0 : (int)stockNumberBox.Value;
+                minStockResult = double.IsNaN(minStockNumberBox.Value) ? 0 : (int)minStockNumberBox.Value;
                 dateResult = datePicker.Date.DateTime;
                 selectedFamilyResult = familyComboBox.SelectedItem as Family;
                 selectedTaxResult = taxComboBox.SelectedItem as Tax;
@@ -348,6 +360,7 @@ namespace EDA_2._0.Views
                         dateResult,
                         priceResult,
                         stockResult,
+                        minStockResult,
                         selectedFamilyResult.Id,
                         selectedTaxResult.Id,
                         isEdit);
@@ -423,7 +436,7 @@ namespace EDA_2._0.Views
             return null;
         }
 
-        private async Task SaveProduct(int? id, string name, string? barcode, DateTime? date, decimal price, int stock, int familyId, int taxId, bool isEdit)
+        private async Task SaveProduct(int? id, string name, string? barcode, DateTime? date, decimal price, int stock, int minStock, int familyId, int taxId, bool isEdit)
         {
             SetLoading(true);
 
@@ -439,6 +452,7 @@ namespace EDA_2._0.Views
                         Date = date,
                         Price = price,
                         Stock = stock,
+                        MinStock = minStock,
                         FamilyId = familyId,
                         TaxId = taxId
                     };
@@ -464,6 +478,7 @@ namespace EDA_2._0.Views
                         Date = date,
                         Price = price,
                         Stock = stock,
+                        MinStock = minStock,
                         FamilyId = familyId,
                         TaxId = taxId
                     };
@@ -560,6 +575,29 @@ namespace EDA_2._0.Views
             finally
             {
                 SetLoading(false);
+            }
+        }
+
+        private void ProductsListView_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            if (args.Item is Product product)
+            {
+                if (product.Stock == 0)
+                {
+                    // Stock agotado - rojo más intenso
+                    args.ItemContainer.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Windows.UI.Color.FromArgb(0x40, 0xFF, 0x00, 0x00));
+                }
+                else if (product.MinStock > 0 && product.Stock <= product.MinStock)
+                {
+                    // Stock bajo - rojo suave
+                    args.ItemContainer.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                        Windows.UI.Color.FromArgb(0x25, 0xFF, 0x00, 0x00));
+                }
+                else
+                {
+                    args.ItemContainer.Background = null;
+                }
             }
         }
 

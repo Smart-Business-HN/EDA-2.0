@@ -62,13 +62,15 @@
         <ListView
             x:Name="ProductsListView"
             Grid.Row="2"
-            SelectionMode="None">
+            SelectionMode="None"
+            ContainerContentChanging="ProductsListView_ContainerContentChanging">
             <ListView.Header>
                 <Grid Padding="12,8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Margin="0,0,0,8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="120"/>
                         <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="80"/>
                         <ColumnDefinition Width="80"/>
                         <ColumnDefinition Width="120"/>
                         <ColumnDefinition Width="120"/>
@@ -78,9 +80,10 @@
                     <TextBlock Grid.Column="1" Text="Codigo" FontWeight="SemiBold"/>
                     <TextBlock Grid.Column="2" Text="Precio" FontWeight="SemiBold" HorizontalAlignment="Right"/>
                     <TextBlock Grid.Column="3" Text="Stock" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                    <TextBlock Grid.Column="4" Text="Familia" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Column="5" Text="Impuesto" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Column="6" Text="Acciones" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="4" Text="Min." FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="5" Text="Familia" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="6" Text="Impuesto" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="7" Text="Acciones" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                 </Grid>
             </ListView.Header>
             <ListView.ItemTemplate>
@@ -91,6 +94,7 @@
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="100"/>
                             <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="80"/>
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="Auto" MinWidth="180"/>
@@ -99,9 +103,10 @@
                         <TextBlock Grid.Column="1" Text="{Binding Barcode}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                         <TextBlock Grid.Column="2" Text="{Binding Price}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                         <TextBlock Grid.Column="3" Text="{Binding Stock}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        <TextBlock Grid.Column="4" Text="{Binding Family.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Grid.Column="5" Text="{Binding Tax.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                        <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                        <TextBlock Grid.Column="4" Text="{Binding MinStock}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="5" Text="{Binding Family.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="6" Text="{Binding Tax.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <StackPanel Grid.Column="7" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
                             <Button
                                 Content="Editar"
                                 Click="EditButton_Click"
@@ -109,7 +114,8 @@
                             <Button
                                 Content="Eliminar"
                                 Click="DeleteButton_Click"
-                                Tag="{Binding}"/>
+                                Tag="{Binding}"
+                                Foreground="#FFD32F2F"/>
                         </StackPanel>
                     </Grid>
                 </DataTemplate>

@@ -13,6 +13,7 @@ namespace EDA.APPLICATION.Features.ProductFeature.Commands.CreateProductCommand
         public DateTime? Date { get; set; }
         public decimal Price { get; set; }
         public int Stock { get; set; }
+        public int MinStock { get; set; }
         public int FamilyId { get; set; }
         public int TaxId { get; set; }
     }
@@ -58,6 +59,7 @@ namespace EDA.APPLICATION.Features.ProductFeature.Commands.CreateProductCommand
                 Date = request.Date,
                 Price = request.Price,
                 Stock = request.Stock,
+                MinStock = request.MinStock,
                 FamilyId = request.FamilyId,
                 TaxId = request.TaxId
             };

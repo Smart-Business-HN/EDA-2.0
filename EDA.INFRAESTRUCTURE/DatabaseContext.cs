@@ -22,6 +22,8 @@ namespace EDA.INFRAESTRUCTURE
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<SoldProduct> SoldProducts { get; set; }
         public DbSet<InvoicePayment> InvoicePayments { get; set; }
+        public DbSet<PendingSale> PendingSales { get; set; }
+        public DbSet<Shift> Shifts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -97,6 +99,7 @@ namespace EDA.INFRAESTRUCTURE
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Barcode).HasMaxLength(50);
                 entity.Property(e => e.Price).HasPrecision(18, 2);
+                entity.Property(e => e.MinStock).HasDefaultValue(0);
                 entity.HasOne(e => e.Family)
                       .WithMany()
                       .HasForeignKey(e => e.FamilyId)
@@ -198,6 +201,32 @@ namespace EDA.INFRAESTRUCTURE
                 entity.HasOne(e => e.PaymentType)
                       .WithMany()
                       .HasForeignKey(e => e.PaymentTypeId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // PendingSale
+            modelBuilder.Entity<PendingSale>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.DisplayName).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.JsonData).IsRequired();
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Shift
+            modelBuilder.Entity<Shift>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.ShiftType).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.InitialAmount).HasPrecision(18, 2);
+                entity.Property(e => e.FinalAmount).HasPrecision(18, 2);
+                entity.Property(e => e.Difference).HasPrecision(18, 2);
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 

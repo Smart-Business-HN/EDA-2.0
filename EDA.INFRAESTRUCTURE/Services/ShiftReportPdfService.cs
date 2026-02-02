@@ -1,0 +1,102 @@
+using EDA.APPLICATION.DTOs;
+using EDA.APPLICATION.Interfaces;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+
+namespace EDA.INFRAESTRUCTURE.Services
+{
+    public class ShiftReportPdfService : IShiftReportPdfService
+    {
+        public byte[] GenerateShiftReportPdf(ShiftReportData data)
+        {
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.ContinuousSize(80, Unit.Millimetre);
+                    page.MarginVertical(3, Unit.Millimetre);
+                    page.MarginHorizontal(2, Unit.Millimetre);
+                    page.DefaultTextStyle(x => x.FontSize(8));
+
+                    page.Content().Column(column =>
+                    {
+                        column.Spacing(2);
+
+                        // === HEADER - Empresa ===
+                        column.Item().AlignCenter().Text(data.CompanyName)
+                            .Bold().FontSize(10);
+
+                        if (!string.IsNullOrEmpty(data.CompanyAddress))
+                            column.Item().AlignCenter().Text(data.CompanyAddress).FontSize(7);
+
+                        if (!string.IsNullOrEmpty(data.CompanyRTN))
+                            column.Item().AlignCenter().Text($"RTN: {data.CompanyRTN}").FontSize(7);
+
+                        // Separador
+                        column.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Colors.Black);
+
+                        // === TITULO ===
+                        column.Item().AlignCenter().Text("REPORTE DE CIERRE DE TURNO")
+                            .Bold().FontSize(9);
+
+                        // Separador
+                        column.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Colors.Black);
+
+                        // === INFO TURNO ===
+                        column.Item().Text($"Usuario: {data.UserName}").FontSize(8);
+                        column.Item().Text($"Turno: {data.ShiftType}").FontSize(8);
+                        column.Item().Text($"Inicio: {data.StartTime:dd/MM/yyyy HH:mm}").FontSize(8);
+                        column.Item().Text($"Cierre: {data.EndTime:dd/MM/yyyy HH:mm}").FontSize(8);
+
+                        // Separador
+                        column.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Colors.Black);
+
+                        // === MONTOS ===
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("Monto Inicial:").FontSize(8);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.InitialAmount:N2}").FontSize(8);
+                        });
+
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("Monto Final:").FontSize(8);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.FinalAmount:N2}").FontSize(8);
+                        });
+
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("Diferencia:").Bold().FontSize(8);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.Difference:N2}").Bold().FontSize(8);
+                        });
+
+                        // Separador
+                        column.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Colors.Black);
+
+                        // === VENTAS ===
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("Total Facturas:").FontSize(8);
+                            row.ConstantItem(80).AlignRight().Text($"{data.TotalInvoices}").FontSize(8);
+                        });
+
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("Total Ventas:").Bold().FontSize(9);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.TotalSales:N2}").Bold().FontSize(9);
+                        });
+
+                        // Separador final
+                        column.Item().PaddingVertical(4).LineHorizontal(0.5f).LineColor(Colors.Black);
+
+                        // Pie
+                        column.Item().AlignCenter().Text($"Generado: {DateTime.Now:dd/MM/yyyy HH:mm:ss}").FontSize(6);
+                    });
+                });
+            });
+
+            return document.GeneratePdf();
+        }
+    }
+}

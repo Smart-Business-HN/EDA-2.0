@@ -32,6 +32,11 @@
                         <FontIcon Glyph="&#xE719;"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem x:Name="NavTurnos" Content="Turnos" Tag="turnos">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE823;"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
 
                 <!-- Catalogos -->
                 <NavigationViewItemHeader Content="Catalogos"/>
@@ -103,6 +108,11 @@
                             <MenuFlyoutItem x:Name="MenuChangePassword" Text="Cambiar Contrasena" Click="ChangePassword_Click">
                                 <MenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE8D7;"/>
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem x:Name="MenuCloseShift" Text="Cerrar Turno" Click="CloseShift_Click">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE823;"/>
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutSeparator/>

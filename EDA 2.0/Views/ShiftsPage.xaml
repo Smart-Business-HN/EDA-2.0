@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="EDA_2._0.Views.ShiftsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EDA_2._0.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent"
+    Loaded="Page_Loaded">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock
+                Text="Turnos"
+                FontSize="28"
+                FontWeight="SemiBold"/>
+            <TextBlock
+                Text="Gestionar los turnos de los cajeros"
+                FontSize="14"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Toolbar: Filter + Search + New Shift Button -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*" MaxWidth="300"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ComboBox
+                x:Name="FilterComboBox"
+                Grid.Column="0"
+                PlaceholderText="Estado"
+                SelectedIndex="0"
+                SelectionChanged="FilterComboBox_SelectionChanged"
+                Margin="0,0,12,0"
+                MinWidth="150">
+                <ComboBoxItem Content="Todos"/>
+                <ComboBoxItem Content="Abiertos"/>
+                <ComboBoxItem Content="Cerrados"/>
+            </ComboBox>
+
+            <TextBox
+                x:Name="SearchTextBox"
+                Grid.Column="1"
+                PlaceholderText="Buscar por nombre de usuario..."
+                KeyDown="SearchTextBox_KeyDown"/>
+
+            <Button
+                x:Name="NewShiftButton"
+                Grid.Column="2"
+                Content="+ Abrir Turno"
+                Style="{StaticResource AccentButtonStyle}"
+                Click="NewShiftButton_Click"
+                Margin="12,0,0,0"/>
+        </Grid>
+
+        <!-- Shifts List -->
+        <ListView
+            x:Name="ShiftsListView"
+            Grid.Row="2"
+            SelectionMode="None"
+            ContainerContentChanging="ShiftsListView_ContainerContentChanging">
+            <ListView.Header>
+                <Grid Padding="12,8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="70"/>
+                        <ColumnDefinition Width="Auto" MinWidth="180"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Usuario" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Text="Turno" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="2" Text="Inicio" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="3" Text="Cierre" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="4" Text="Monto Inicial" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Column="5" Text="Monto Final" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Column="6" Text="Diferencia" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Column="7" Text="Estado" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="8" Text="Acciones" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                </Grid>
+            </ListView.Header>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="12,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="70"/>
+                            <ColumnDefinition Width="Auto" MinWidth="180"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding User.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ShiftType}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding StartTime}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="3" Text="{Binding EndTime}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="4" Text="{Binding InitialAmount}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="5" Text="{Binding FinalAmount}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="6" Text="{Binding Difference}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                        <Border Grid.Column="7" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                CornerRadius="4" Padding="8,2">
+                            <TextBlock Text="{Binding IsOpen}" FontSize="12"/>
+                        </Border>
+                        <StackPanel Grid.Column="8" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <Button
+                                Content="Cerrar Turno"
+                                Click="CloseShiftButton_Click"
+                                Tag="{Binding}"/>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Footer: Pagination + Loading -->
+        <Grid Grid.Row="3" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Pagination -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                <Button
+                    x:Name="PreviousPageButton"
+                    Content="&lt; Anterior"
+                    Click="PreviousPageButton_Click"
+                    IsEnabled="False"/>
+                <TextBlock
+                    x:Name="PageInfoText"
+                    Text="Pagina 1 de 1"
+                    VerticalAlignment="Center"
+                    Margin="8,0"/>
+                <Button
+                    x:Name="NextPageButton"
+                    Content="Siguiente &gt;"
+                    Click="NextPageButton_Click"
+                    IsEnabled="False"/>
+            </StackPanel>
+
+            <!-- Loading -->
+            <ProgressRing
+                x:Name="LoadingRing"
+                Grid.Column="1"
+                IsActive="False"
+                Width="24"
+                Height="24"/>
+        </Grid>
+    </Grid>
+</Page>

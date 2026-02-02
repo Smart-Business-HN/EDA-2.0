@@ -27,12 +27,14 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using EDA.INFRAESTRUCTURE;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace EDA_2._0.Views
 {
     public class CartItem : INotifyPropertyChanged
     {
         private int _quantity;
+        private decimal _unitPrice;
 
         public Product Product { get; set; } = null!;
 
@@ -41,7 +43,7 @@ namespace EDA_2._0.Views
             get => _quantity;
             set
             {
-                if (_quantity != value)
+                if (_quantity != value && value >= 1)
                 {
                     _quantity = value;
                     OnPropertyChanged();
@@ -50,7 +52,20 @@ namespace EDA_2._0.Views
             }
         }
 
-        public decimal UnitPrice { get; set; }
+        public decimal UnitPrice
+        {
+            get => _unitPrice;
+            set
+            {
+                if (_unitPrice != value && value >= 0)
+                {
+                    _unitPrice = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(Subtotal));
+                }
+            }
+        }
+
         public decimal Subtotal => Quantity * UnitPrice;
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -67,6 +82,38 @@ namespace EDA_2._0.Views
         public decimal Amount { get; set; }
     }
 
+    public class SaleSession
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public int? DbId { get; set; }
+        public string DisplayName { get; set; } = "Venta 1";
+        public ObservableCollection<CartItem> CartItems { get; set; } = new();
+        public ObservableCollection<PaymentItem> PaymentItems { get; set; } = new();
+        public Customer? SelectedCustomer { get; set; }
+        public Discount? SelectedDiscount { get; set; }
+    }
+
+    public class PendingSaleData
+    {
+        public List<PendingSaleItemData> Items { get; set; } = new();
+        public List<PendingSalePaymentData> Payments { get; set; } = new();
+        public int? CustomerId { get; set; }
+        public int? DiscountId { get; set; }
+    }
+
+    public class PendingSaleItemData
+    {
+        public int ProductId { get; set; }
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+
+    public class PendingSalePaymentData
+    {
+        public int PaymentTypeId { get; set; }
+        public decimal Amount { get; set; }
+    }
+
     public sealed partial class POSPage : Page
     {
         private readonly IMediator _mediator;
@@ -80,9 +127,15 @@ namespace EDA_2._0.Views
         private List<Tax> _taxes = new();
         private Cai? _activeCai;
         private Discount? _selectedDiscount;
+        private Customer? _selectedCustomer;
+        private Family? _selectedFamily;
 
         private ObservableCollection<CartItem> _cartItems = new();
         private ObservableCollection<PaymentItem> _paymentItems = new();
+
+        private List<SaleSession> _saleSessions = new();
+        private SaleSession _currentSession = null!;
+        private int _saleCounter = 0;
 
         public POSPage()
         {
@@ -98,6 +151,15 @@ namespace EDA_2._0.Views
         {
             await LoadInitialData();
             SetupCashierInfo();
+            await LoadPendingSalesFromDb();
+            if (_saleSessions.Count == 0)
+            {
+                CreateNewSaleSession();
+            }
+            else
+            {
+                LoadSession(_saleSessions[0]);
+            }
             UpdateTotals();
         }
 
@@ -118,7 +180,10 @@ namespace EDA_2._0.Views
                 if (customersResult.Succeeded && customersResult.Data != null)
                 {
                     _customers = customersResult.Data.Items.ToList();
-                    CustomerComboBox.ItemsSource = _customers;
+
+                    // Seleccionar Consumidor Final por defecto (ID=1)
+                    var defaultCustomer = _customers.FirstOrDefault(c => c.Id == 1);
+                    SetSelectedCustomer(defaultCustomer);
                 }
 
                 // Cargar descuentos
@@ -137,11 +202,12 @@ namespace EDA_2._0.Views
                     PaymentTypeComboBox.ItemsSource = _paymentTypes;
                 }
 
-                // Cargar familias y impuestos (para crear productos)
+                // Cargar familias (para filtro y crear productos)
                 var familiesResult = await _mediator.Send(new GetAllFamiliesQuery { GetAll = true });
                 if (familiesResult.Succeeded && familiesResult.Data != null)
                 {
                     _families = familiesResult.Data.Items.ToList();
+                    BuildFamilyButtons();
                 }
 
                 var taxesResult = await _mediator.Send(new GetAllTaxesQuery { GetAll = true });
@@ -200,20 +266,156 @@ namespace EDA_2._0.Views
         {
             if (e.Key == Windows.System.VirtualKey.Enter)
             {
-                var searchTerm = ProductSearchTextBox.Text?.Trim().ToLower();
-                if (string.IsNullOrEmpty(searchTerm))
+                ApplyProductFilters();
+            }
+        }
+
+        private void BuildFamilyButtons()
+        {
+            FamiliesPanel.Children.Clear();
+
+            // Contar productos totales
+            var totalProductCount = _allProducts.Count;
+
+            // Botón "Todos"
+            var allButton = new Button
+            {
+                Content = new StackPanel
                 {
-                    ProductsItemsControl.ItemsSource = _allProducts;
-                }
-                else
+                    Children =
+                    {
+                        new TextBlock
+                        {
+                            Text = "Todos",
+                            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                            HorizontalAlignment = HorizontalAlignment.Center
+                        },
+                        new TextBlock
+                        {
+                            Text = $"Productos: {totalProductCount}",
+                            FontSize = 11,
+                            Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray),
+                            HorizontalAlignment = HorizontalAlignment.Center
+                        }
+                    }
+                },
+                MinWidth = 100,
+                Height = 50,
+                Padding = new Thickness(12, 6, 12, 6),
+                Style = (Style)Application.Current.Resources["AccentButtonStyle"]
+            };
+            allButton.Click += (s, e) =>
+            {
+                _selectedFamily = null;
+                UpdateFamilyButtonStyles();
+                ApplyProductFilters();
+            };
+            FamiliesPanel.Children.Add(allButton);
+
+            // Filtrar familias que tienen productos y crear botones
+            var familiesWithProducts = _families
+                .Select(f => new { Family = f, ProductCount = _allProducts.Count(p => p.FamilyId == f.Id) })
+                .Where(x => x.ProductCount > 0)
+                .ToList();
+
+            foreach (var item in familiesWithProducts)
+            {
+                var family = item.Family;
+                var productCount = item.ProductCount;
+
+                var button = new Button
                 {
-                    var filtered = _allProducts.Where(p =>
-                        p.Name.ToLower().Contains(searchTerm) ||
-                        (p.Barcode != null && p.Barcode.ToLower().Contains(searchTerm))
-                    ).ToList();
-                    ProductsItemsControl.ItemsSource = filtered;
+                    Content = new StackPanel
+                    {
+                        Children =
+                        {
+                            new TextBlock
+                            {
+                                Text = family.Name,
+                                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                                HorizontalAlignment = HorizontalAlignment.Center
+                            },
+                            new TextBlock
+                            {
+                                Text = $"Productos: {productCount}",
+                                FontSize = 11,
+                                Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray),
+                                HorizontalAlignment = HorizontalAlignment.Center
+                            }
+                        }
+                    },
+                    Tag = family,
+                    MinWidth = 100,
+                    Height = 50,
+                    Padding = new Thickness(12, 6, 12, 6)
+                };
+                button.Click += (s, e) =>
+                {
+                    _selectedFamily = family;
+                    UpdateFamilyButtonStyles();
+                    ApplyProductFilters();
+                };
+                FamiliesPanel.Children.Add(button);
+            }
+        }
+
+        private void UpdateFamilyButtonStyles()
+        {
+            foreach (var child in FamiliesPanel.Children)
+            {
+                if (child is Button button)
+                {
+                    var isSelected = false;
+
+                    if (button.Tag is Family family)
+                    {
+                        isSelected = _selectedFamily != null && _selectedFamily.Id == family.Id;
+                    }
+                    else
+                    {
+                        // Botón "Todos"
+                        isSelected = _selectedFamily == null;
+                    }
+
+                    button.Style = isSelected
+                        ? (Style)Application.Current.Resources["AccentButtonStyle"]
+                        : (Style)Application.Current.Resources["DefaultButtonStyle"];
+
+                    // Actualizar color del texto secundario según selección
+                    if (button.Content is StackPanel stackPanel && stackPanel.Children.Count >= 2)
+                    {
+                        if (stackPanel.Children[1] is TextBlock countText)
+                        {
+                            countText.Foreground = isSelected
+                                ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White)
+                                : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
+                        }
+                    }
                 }
             }
+        }
+
+        private void ApplyProductFilters()
+        {
+            var searchTerm = ProductSearchTextBox.Text?.Trim().ToLower() ?? "";
+
+            IEnumerable<Product> filtered = _allProducts;
+
+            // Filtrar por familia si hay una seleccionada
+            if (_selectedFamily != null)
+            {
+                filtered = filtered.Where(p => p.FamilyId == _selectedFamily.Id);
+            }
+
+            // Filtrar por término de búsqueda
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                filtered = filtered.Where(p =>
+                    p.Name.ToLower().Contains(searchTerm) ||
+                    (p.Barcode != null && p.Barcode.ToLower().Contains(searchTerm)));
+            }
+
+            ProductsItemsControl.ItemsSource = filtered.ToList();
         }
 
         private void ProductButton_Click(object sender, RoutedEventArgs e)
@@ -224,7 +426,7 @@ namespace EDA_2._0.Views
             }
         }
 
-        private void AddProductToCart(Product product)
+        private async void AddProductToCart(Product product)
         {
             var existingItem = _cartItems.FirstOrDefault(c => c.Product.Id == product.Id);
 
@@ -234,15 +436,62 @@ namespace EDA_2._0.Views
             }
             else
             {
-                _cartItems.Add(new CartItem
+                var newItem = new CartItem
                 {
                     Product = product,
                     Quantity = 1,
                     UnitPrice = product.Price
-                });
+                };
+
+                // Suscribir a cambios para actualizar totales
+                newItem.PropertyChanged += CartItem_PropertyChanged;
+
+                _cartItems.Add(newItem);
             }
 
             UpdateTotals();
+
+            // Alerta de stock bajo
+            if (product.MinStock > 0 && product.Stock <= product.MinStock)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Stock Bajo",
+                    Content = new StackPanel
+                    {
+                        Spacing = 12,
+                        Children =
+                        {
+                            new FontIcon
+                            {
+                                Glyph = "\uE7BA",
+                                FontSize = 48,
+                                Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Orange),
+                                HorizontalAlignment = HorizontalAlignment.Center
+                            },
+                            new TextBlock
+                            {
+                                Text = $"El producto \"{product.Name}\" tiene stock bajo.\nStock actual: {product.Stock} | Mínimo: {product.MinStock}",
+                                TextWrapping = TextWrapping.Wrap,
+                                HorizontalAlignment = HorizontalAlignment.Center
+                            }
+                        }
+                    },
+                    CloseButtonText = "Aceptar",
+                    XamlRoot = this.XamlRoot
+                };
+                await dialog.ShowAsync();
+            }
+        }
+
+        private void CartItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(CartItem.Quantity) ||
+                e.PropertyName == nameof(CartItem.UnitPrice) ||
+                e.PropertyName == nameof(CartItem.Subtotal))
+            {
+                UpdateTotals();
+            }
         }
 
         #endregion
@@ -265,12 +514,8 @@ namespace EDA_2._0.Views
                 if (item.Quantity > 1)
                 {
                     item.Quantity--;
+                    UpdateTotals();
                 }
-                else
-                {
-                    _cartItems.Remove(item);
-                }
-                UpdateTotals();
             }
         }
 
@@ -278,7 +523,96 @@ namespace EDA_2._0.Views
         {
             if (sender is Button button && button.Tag is CartItem item)
             {
+                item.PropertyChanged -= CartItem_PropertyChanged;
                 _cartItems.Remove(item);
+                UpdateTotals();
+            }
+        }
+
+        #endregion
+
+        #region Editable Cart Fields
+
+        private void QuantityNumberBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is NumberBox numberBox && numberBox.Tag is CartItem item)
+            {
+                ValidateAndUpdateQuantity(numberBox, item);
+            }
+        }
+
+        private void QuantityNumberBox_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                if (sender is NumberBox numberBox && numberBox.Tag is CartItem item)
+                {
+                    ValidateAndUpdateQuantity(numberBox, item);
+                    CartListView.Focus(FocusState.Programmatic);
+                }
+            }
+        }
+
+        private void ValidateAndUpdateQuantity(NumberBox numberBox, CartItem item)
+        {
+            if (double.IsNaN(numberBox.Value))
+            {
+                numberBox.Value = item.Quantity;
+                return;
+            }
+
+            var newQuantity = (int)Math.Round(numberBox.Value);
+            if (newQuantity < 1)
+            {
+                newQuantity = 1;
+                numberBox.Value = newQuantity;
+            }
+
+            if (item.Quantity != newQuantity)
+            {
+                item.Quantity = newQuantity;
+                UpdateTotals();
+            }
+        }
+
+        private void PriceNumberBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is NumberBox numberBox && numberBox.Tag is CartItem item)
+            {
+                ValidateAndUpdatePrice(numberBox, item);
+            }
+        }
+
+        private void PriceNumberBox_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                if (sender is NumberBox numberBox && numberBox.Tag is CartItem item)
+                {
+                    ValidateAndUpdatePrice(numberBox, item);
+                    CartListView.Focus(FocusState.Programmatic);
+                }
+            }
+        }
+
+        private void ValidateAndUpdatePrice(NumberBox numberBox, CartItem item)
+        {
+            if (double.IsNaN(numberBox.Value))
+            {
+                numberBox.Value = (double)item.UnitPrice;
+                return;
+            }
+
+            var newPrice = Math.Round((decimal)numberBox.Value, 2);
+            if (newPrice < 0)
+            {
+                newPrice = 0;
+                numberBox.Value = 0;
+            }
+
+            if (item.UnitPrice != newPrice)
+            {
+                item.UnitPrice = newPrice;
                 UpdateTotals();
             }
         }
@@ -612,9 +946,7 @@ namespace EDA_2._0.Views
                     if (createResult.Succeeded && createResult.Data != null)
                     {
                         _customers.Add(createResult.Data);
-                        CustomerComboBox.ItemsSource = null;
-                        CustomerComboBox.ItemsSource = _customers;
-                        CustomerComboBox.SelectedItem = createResult.Data;
+                        SetSelectedCustomer(createResult.Data);
                         await ShowSuccess("Cliente creado exitosamente.");
                     }
                     else
@@ -635,12 +967,535 @@ namespace EDA_2._0.Views
 
         #endregion
 
+        #region Customer Search
+
+        private async void CustomerSelectButton_Click(object sender, RoutedEventArgs e)
+        {
+            await ShowCustomerSearchDialog();
+        }
+
+        private async Task ShowCustomerSearchDialog()
+        {
+            var searchTextBox = new TextBox
+            {
+                PlaceholderText = "Buscar por nombre, RTN o empresa...",
+                Margin = new Thickness(0, 0, 0, 12)
+            };
+
+            var resultsListView = new ListView
+            {
+                MaxHeight = 300,
+                SelectionMode = ListViewSelectionMode.Single
+            };
+
+            // Cargar resultados iniciales
+            resultsListView.ItemsSource = _customers.Take(50).ToList();
+
+            // Búsqueda en tiempo real
+            searchTextBox.TextChanged += (s, args) =>
+            {
+                var term = searchTextBox.Text?.Trim().ToLower() ?? "";
+                if (string.IsNullOrEmpty(term))
+                {
+                    resultsListView.ItemsSource = _customers.Take(50).ToList();
+                }
+                else
+                {
+                    resultsListView.ItemsSource = _customers
+                        .Where(c => c.Name.ToLower().Contains(term) ||
+                                   (c.RTN != null && c.RTN.ToLower().Contains(term)) ||
+                                   (c.Company != null && c.Company.ToLower().Contains(term)))
+                        .Take(50)
+                        .ToList();
+                }
+            };
+
+            // Template para mostrar nombre y RTN
+            resultsListView.ItemTemplate = (DataTemplate)Microsoft.UI.Xaml.Markup.XamlReader.Load(@"
+                <DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'>
+                    <StackPanel Padding='8,4'>
+                        <TextBlock Text='{Binding Name}' FontWeight='SemiBold'/>
+                        <TextBlock Text='{Binding RTN}' FontSize='12' Foreground='Gray'/>
+                    </StackPanel>
+                </DataTemplate>");
+
+            var content = new StackPanel
+            {
+                Width = 400,
+                Children = { searchTextBox, resultsListView }
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = "Seleccionar Cliente",
+                Content = content,
+                PrimaryButtonText = "Seleccionar",
+                CloseButtonText = "Cancelar",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot,
+                IsPrimaryButtonEnabled = false
+            };
+
+            resultsListView.SelectionChanged += (s, args) =>
+            {
+                dialog.IsPrimaryButtonEnabled = resultsListView.SelectedItem != null;
+            };
+
+            resultsListView.DoubleTapped += (s, args) =>
+            {
+                if (resultsListView.SelectedItem is Customer customer)
+                {
+                    SetSelectedCustomer(customer);
+                    dialog.Hide();
+                }
+            };
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary && resultsListView.SelectedItem is Customer selectedCustomer)
+            {
+                SetSelectedCustomer(selectedCustomer);
+            }
+        }
+
+        private void SetSelectedCustomer(Customer? customer, bool updateTabName = true)
+        {
+            _selectedCustomer = customer;
+            CustomerSelectButton.Content = customer?.Name ?? "Seleccionar cliente...";
+
+            if (updateTabName && _currentSession != null)
+            {
+                _currentSession.DisplayName = customer != null && customer.Id != 1
+                    ? customer.Name
+                    : $"Venta {_saleSessions.IndexOf(_currentSession) + 1}";
+                BuildSaleTabButtons();
+            }
+        }
+
+        #endregion
+
+        #region Sale Sessions
+
+        private void SaveCurrentSessionState()
+        {
+            if (_currentSession == null) return;
+            _currentSession.CartItems = _cartItems;
+            _currentSession.PaymentItems = _paymentItems;
+            _currentSession.SelectedCustomer = _selectedCustomer;
+            _currentSession.SelectedDiscount = _selectedDiscount;
+        }
+
+        private void LoadSession(SaleSession session)
+        {
+            _currentSession = session;
+
+            // Desuscribir de items anteriores
+            foreach (var item in _cartItems)
+            {
+                item.PropertyChanged -= CartItem_PropertyChanged;
+            }
+
+            // Cargar colecciones de la sesión
+            _cartItems = session.CartItems;
+            _paymentItems = session.PaymentItems;
+            _selectedCustomer = session.SelectedCustomer;
+            _selectedDiscount = session.SelectedDiscount;
+
+            // Suscribir a items
+            foreach (var item in _cartItems)
+            {
+                item.PropertyChanged += CartItem_PropertyChanged;
+            }
+
+            // Actualizar bindings de UI
+            CartListView.ItemsSource = _cartItems;
+            PaymentsListView.ItemsSource = _paymentItems;
+            SetSelectedCustomer(_selectedCustomer ?? _customers.FirstOrDefault(c => c.Id == 1), updateTabName: false);
+
+            if (_selectedDiscount != null)
+            {
+                SelectedDiscountText.Text = $"{_selectedDiscount.Percentage}% {_selectedDiscount.Name}";
+                SelectedDiscountPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                SelectedDiscountPanel.Visibility = Visibility.Collapsed;
+            }
+
+            PaymentTypeComboBox.SelectedIndex = -1;
+            PaymentAmountTextBox.Text = string.Empty;
+            UpdateTotals();
+            BuildSaleTabButtons();
+        }
+
+        private void CreateNewSaleSession()
+        {
+            // Guardar sesión actual si existe
+            if (_currentSession != null)
+            {
+                SaveCurrentSessionState();
+            }
+
+            _saleCounter++;
+            var session = new SaleSession
+            {
+                DisplayName = $"Venta {_saleCounter}",
+                SelectedCustomer = _customers.FirstOrDefault(c => c.Id == 1)
+            };
+            _saleSessions.Add(session);
+            LoadSession(session);
+        }
+
+        private async void RemoveSaleSession(SaleSession session)
+        {
+            // No permitir cerrar si es la única
+            if (_saleSessions.Count <= 1)
+            {
+                return;
+            }
+
+            // Confirmación si tiene items
+            if (session.CartItems.Count > 0)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Cerrar venta",
+                    Content = $"La venta \"{session.DisplayName}\" tiene {session.CartItems.Count} producto(s). ¿Desea cerrarla?",
+                    PrimaryButtonText = "Cerrar",
+                    CloseButtonText = "Cancelar",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot
+                };
+                var result = await dialog.ShowAsync();
+                if (result != ContentDialogResult.Primary) return;
+            }
+
+            // Eliminar de DB si existe
+            if (session.DbId.HasValue)
+            {
+                await DeletePendingSaleFromDb(session.DbId.Value);
+            }
+
+            // Desuscribir items de la sesión a eliminar
+            foreach (var item in session.CartItems)
+            {
+                item.PropertyChanged -= CartItem_PropertyChanged;
+            }
+
+            _saleSessions.Remove(session);
+
+            // Si era la sesión activa, cambiar a otra
+            if (_currentSession == session)
+            {
+                LoadSession(_saleSessions[0]);
+            }
+            else
+            {
+                BuildSaleTabButtons();
+            }
+        }
+
+        private async void RemoveCurrentSessionAfterInvoice()
+        {
+            // Eliminar de DB si existe
+            if (_currentSession.DbId.HasValue)
+            {
+                await DeletePendingSaleFromDb(_currentSession.DbId.Value);
+            }
+
+            // Desuscribir items
+            foreach (var item in _currentSession.CartItems)
+            {
+                item.PropertyChanged -= CartItem_PropertyChanged;
+            }
+
+            _saleSessions.Remove(_currentSession);
+
+            if (_saleSessions.Count == 0)
+            {
+                CreateNewSaleSession();
+            }
+            else
+            {
+                LoadSession(_saleSessions[0]);
+            }
+        }
+
+        private async void NewSaleTab_Click(object sender, RoutedEventArgs e)
+        {
+            SaveCurrentSessionState();
+            await SaveCurrentSessionToDb();
+            CreateNewSaleSession();
+        }
+
+        private void BuildSaleTabButtons()
+        {
+            SaleTabsPanel.Children.Clear();
+
+            foreach (var session in _saleSessions)
+            {
+                var isActive = session == _currentSession;
+
+                var nameText = new TextBlock
+                {
+                    Text = session.DisplayName,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    FontWeight = isActive ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal
+                };
+
+                var tabContent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+                tabContent.Children.Add(nameText);
+
+                // Mostrar cantidad de items si tiene
+                if (session.CartItems.Count > 0)
+                {
+                    tabContent.Children.Add(new TextBlock
+                    {
+                        Text = $"({session.CartItems.Count})",
+                        FontSize = 11,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray)
+                    });
+                }
+
+                // Botón X para cerrar (solo si hay más de una sesión)
+                if (_saleSessions.Count > 1)
+                {
+                    var closeButton = new Button
+                    {
+                        Content = "\uE711",
+                        FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe MDL2 Assets"),
+                        Width = 20,
+                        Height = 20,
+                        Padding = new Thickness(0),
+                        Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent),
+                        Tag = session,
+                        FontSize = 10,
+                        VerticalAlignment = VerticalAlignment.Center
+                    };
+                    closeButton.Click += (s, args) =>
+                    {
+                        if (closeButton.Tag is SaleSession sess)
+                        {
+                            RemoveSaleSession(sess);
+                        }
+                    };
+                    tabContent.Children.Add(closeButton);
+                }
+
+                var tabButton = new Button
+                {
+                    Content = tabContent,
+                    Tag = session,
+                    Padding = new Thickness(12, 6, 12, 6),
+                    Style = isActive
+                        ? (Style)Application.Current.Resources["AccentButtonStyle"]
+                        : (Style)Application.Current.Resources["DefaultButtonStyle"]
+                };
+                tabButton.Click += async (s, args) =>
+                {
+                    if (tabButton.Tag is SaleSession sess && sess != _currentSession)
+                    {
+                        SaveCurrentSessionState();
+                        await SaveCurrentSessionToDb();
+                        LoadSession(sess);
+                    }
+                };
+                SaleTabsPanel.Children.Add(tabButton);
+            }
+
+            // Botón "+" para nueva venta
+            var addButton = new Button
+            {
+                Content = "+",
+                Width = 36,
+                Height = 36,
+                Padding = new Thickness(0),
+                FontSize = 16,
+                FontWeight = Microsoft.UI.Text.FontWeights.Bold
+            };
+            addButton.Click += NewSaleTab_Click;
+            SaleTabsPanel.Children.Add(addButton);
+        }
+
+        private async Task SaveCurrentSessionToDb()
+        {
+            try
+            {
+                var currentUser = App.CurrentUser;
+                if (currentUser == null || _currentSession == null) return;
+
+                // Solo guardar si tiene items
+                if (_currentSession.CartItems.Count == 0)
+                {
+                    // Si no tiene items pero existe en DB, eliminar
+                    if (_currentSession.DbId.HasValue)
+                    {
+                        await DeletePendingSaleFromDb(_currentSession.DbId.Value);
+                        _currentSession.DbId = null;
+                    }
+                    return;
+                }
+
+                var data = new PendingSaleData
+                {
+                    CustomerId = _currentSession.SelectedCustomer?.Id,
+                    DiscountId = _currentSession.SelectedDiscount?.Id
+                };
+
+                foreach (var item in _currentSession.CartItems)
+                {
+                    data.Items.Add(new PendingSaleItemData
+                    {
+                        ProductId = item.Product.Id,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice
+                    });
+                }
+
+                foreach (var payment in _currentSession.PaymentItems)
+                {
+                    data.Payments.Add(new PendingSalePaymentData
+                    {
+                        PaymentTypeId = payment.PaymentType.Id,
+                        Amount = payment.Amount
+                    });
+                }
+
+                var json = JsonSerializer.Serialize(data);
+
+                if (_currentSession.DbId.HasValue)
+                {
+                    var existing = await _dbContext.PendingSales.FindAsync(_currentSession.DbId.Value);
+                    if (existing != null)
+                    {
+                        existing.DisplayName = _currentSession.DisplayName;
+                        existing.JsonData = json;
+                        _dbContext.PendingSales.Update(existing);
+                    }
+                }
+                else
+                {
+                    var entity = new PendingSale
+                    {
+                        DisplayName = _currentSession.DisplayName,
+                        JsonData = json,
+                        UserId = currentUser.Id,
+                        CreatedAt = DateTime.Now
+                    };
+                    _dbContext.PendingSales.Add(entity);
+                    await _dbContext.SaveChangesAsync();
+                    _currentSession.DbId = entity.Id;
+                    return;
+                }
+
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error saving pending sale: {ex.Message}");
+            }
+        }
+
+        private async Task LoadPendingSalesFromDb()
+        {
+            try
+            {
+                var currentUser = App.CurrentUser;
+                if (currentUser == null) return;
+
+                var pendingSales = await _dbContext.PendingSales
+                    .Where(p => p.UserId == currentUser.Id)
+                    .OrderBy(p => p.CreatedAt)
+                    .ToListAsync();
+
+                foreach (var pending in pendingSales)
+                {
+                    var data = JsonSerializer.Deserialize<PendingSaleData>(pending.JsonData);
+                    if (data == null) continue;
+
+                    _saleCounter++;
+                    var session = new SaleSession
+                    {
+                        DbId = pending.Id,
+                        DisplayName = pending.DisplayName
+                    };
+
+                    // Restaurar items
+                    foreach (var itemData in data.Items)
+                    {
+                        var product = _allProducts.FirstOrDefault(p => p.Id == itemData.ProductId);
+                        if (product == null) continue;
+
+                        var cartItem = new CartItem
+                        {
+                            Product = product,
+                            Quantity = itemData.Quantity,
+                            UnitPrice = itemData.UnitPrice
+                        };
+                        session.CartItems.Add(cartItem);
+                    }
+
+                    // Restaurar pagos
+                    foreach (var paymentData in data.Payments)
+                    {
+                        var paymentType = _paymentTypes.FirstOrDefault(pt => pt.Id == paymentData.PaymentTypeId);
+                        if (paymentType == null) continue;
+
+                        session.PaymentItems.Add(new PaymentItem
+                        {
+                            PaymentType = paymentType,
+                            Amount = paymentData.Amount
+                        });
+                    }
+
+                    // Restaurar cliente y descuento
+                    if (data.CustomerId.HasValue)
+                        session.SelectedCustomer = _customers.FirstOrDefault(c => c.Id == data.CustomerId.Value);
+                    if (data.DiscountId.HasValue)
+                        session.SelectedDiscount = _discounts.FirstOrDefault(d => d.Id == data.DiscountId.Value);
+
+                    _saleSessions.Add(session);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading pending sales: {ex.Message}");
+            }
+        }
+
+        private async Task DeletePendingSaleFromDb(int id)
+        {
+            try
+            {
+                var entity = await _dbContext.PendingSales.FindAsync(id);
+                if (entity != null)
+                {
+                    _dbContext.PendingSales.Remove(entity);
+                    await _dbContext.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error deleting pending sale: {ex.Message}");
+            }
+        }
+
+        #endregion
+
         #region Invoice Actions
 
         private async void Facturar_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                // Validar turno abierto
+                if (App.CurrentShift == null || !App.CurrentShift.IsOpen)
+                {
+                    await ShowError("Debe tener un turno abierto para facturar.");
+                    return;
+                }
+
                 // Validar carrito no vacío
                 if (_cartItems.Count == 0)
                 {
@@ -656,7 +1511,7 @@ namespace EDA_2._0.Views
                 }
 
                 // Validar cliente (usar Consumidor Final si no hay seleccionado)
-                var selectedCustomer = CustomerComboBox.SelectedItem as Customer;
+                var selectedCustomer = _selectedCustomer;
                 if (selectedCustomer == null)
                 {
                     selectedCustomer = _customers.FirstOrDefault(c => c.Id == 1);
@@ -760,8 +1615,8 @@ namespace EDA_2._0.Views
 
                     await ShowSuccess($"Factura {invoice.InvoiceNumber} creada exitosamente.\n\nTotal: L. {invoice.Total:N2}");
 
-                    // Limpiar el carrito y resetear para siguiente factura
-                    ClearButton_Click(sender, e);
+                    // Eliminar sesión facturada y cambiar a otra
+                    RemoveCurrentSessionAfterInvoice();
 
                     // Recargar CAI para obtener correlativo actualizado
                     await LoadActiveCai();
@@ -783,11 +1638,21 @@ namespace EDA_2._0.Views
 
         private void ClearButton_Click(object sender, RoutedEventArgs e)
         {
+            // Desuscribir de todos los items
+            foreach (var item in _cartItems)
+            {
+                item.PropertyChanged -= CartItem_PropertyChanged;
+            }
+
             _cartItems.Clear();
             _paymentItems.Clear();
             _selectedDiscount = null;
             SelectedDiscountPanel.Visibility = Visibility.Collapsed;
-            CustomerComboBox.SelectedIndex = -1;
+
+            // Resetear a cliente por defecto
+            var defaultCustomer = _customers.FirstOrDefault(c => c.Id == 1);
+            SetSelectedCustomer(defaultCustomer);
+
             PaymentTypeComboBox.SelectedIndex = -1;
             PaymentAmountTextBox.Text = string.Empty;
             UpdateTotals();

@@ -22,6 +22,7 @@ namespace EDA.INFRAESTRUCTURE
 
             // Servicios de PDF
             services.AddTransient<IInvoicePdfService, InvoicePdfService>();
+            services.AddTransient<IShiftReportPdfService, ShiftReportPdfService>();
 
             // Servicios de Dashboard
             services.AddScoped<IDashboardService, DashboardService>();
