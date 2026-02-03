@@ -42,6 +42,7 @@ namespace EDA_2._0.Views
                 NavFacturas.Visibility = Visibility.Collapsed;
                 NavTiposPago.Visibility = Visibility.Collapsed;
                 NavTurnos.Visibility = Visibility.Collapsed;
+                NavResumenVentas.Visibility = Visibility.Collapsed;
                 NavCAIs.Visibility = Visibility.Collapsed;
                 NavUsuarios.Visibility = Visibility.Collapsed;
                 NavEmpresa.Visibility = Visibility.Collapsed;
@@ -97,6 +98,9 @@ namespace EDA_2._0.Views
                     case "turnos":
                         ContentFrame.Navigate(typeof(ShiftsPage));
                         break;
+                    case "resumenes":
+                        ContentFrame.Navigate(typeof(SalesSummaryPage));
+                        break;
                 }
             }
         }
@@ -144,15 +148,47 @@ namespace EDA_2._0.Views
 
             var shift = App.CurrentShift;
 
+            // Consultar pagos del turno para mostrar info
+            var dbContext = App.Services.GetRequiredService<DatabaseContext>();
+            var invoiceIds = await dbContext.Invoices
+                .Where(i => i.UserId == shift.UserId && i.Date >= shift.StartTime)
+                .Select(i => i.Id)
+                .ToListAsync();
+
+            var payments = await dbContext.InvoicePayments
+                .Where(p => invoiceIds.Contains(p.InvoiceId))
+                .Include(p => p.PaymentType)
+                .ToListAsync();
+
+            // Efectivo = PaymentTypeId 1, Tarjeta = PaymentTypeId 3, Transferencia = 2
+            var expectedCash = payments.Where(p => p.PaymentTypeId == 1).Sum(p => p.Amount);
+            var expectedCard = payments.Where(p => p.PaymentTypeId == 3 || p.PaymentTypeId == 2).Sum(p => p.Amount);
+            var expectedTotal = shift.InitialAmount + expectedCash + expectedCard;
+
+            var totalInvoices = invoiceIds.Count;
+            var totalSales = await dbContext.Invoices
+                .Where(i => invoiceIds.Contains(i.Id))
+                .SumAsync(i => i.Total);
+
             var infoText = new TextBlock
             {
-                Text = $"Turno: {shift.ShiftType}\nInicio: {shift.StartTime:dd/MM/yyyy HH:mm}\nMonto inicial: L {shift.InitialAmount:N2}",
+                Text = $"Turno: {shift.ShiftType}\nInicio: {shift.StartTime:dd/MM/yyyy HH:mm}\nSaldo inicial: L {shift.InitialAmount:N2}\n\nVentas en efectivo: L {expectedCash:N2}\nVentas en tarjeta: L {expectedCard:N2}\nSaldo esperado: L {expectedTotal:N2}",
                 Margin = new Thickness(0, 0, 0, 12)
             };
 
-            var finalAmountBox = new NumberBox
+            var cashBox = new NumberBox
             {
-                Header = "Monto final en caja *",
+                Header = "Efectivo en caja *",
+                PlaceholderText = "0.00",
+                Value = double.NaN,
+                Minimum = 0,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+
+            var cardBox = new NumberBox
+            {
+                Header = "Total en tarjeta *",
                 PlaceholderText = "0.00",
                 Value = double.NaN,
                 Minimum = 0,
@@ -162,7 +198,7 @@ namespace EDA_2._0.Views
             var content = new StackPanel
             {
                 Width = 400,
-                Children = { infoText, finalAmountBox }
+                Children = { infoText, cashBox, cardBox }
             };
 
             var dialog = new ContentDialog
@@ -182,27 +218,23 @@ namespace EDA_2._0.Views
                 try
                 {
                     var mediator = App.Services.GetRequiredService<IMediator>();
-                    decimal finalAmount = double.IsNaN(finalAmountBox.Value) ? 0 : (decimal)finalAmountBox.Value;
+                    decimal finalCash = double.IsNaN(cashBox.Value) ? 0 : (decimal)cashBox.Value;
+                    decimal finalCard = double.IsNaN(cardBox.Value) ? 0 : (decimal)cardBox.Value;
+                    decimal finalAmount = finalCash + finalCard + shift.InitialAmount;
+                    decimal difference = expectedTotal - finalAmount;
 
                     var command = new UpdateShiftCommand
                     {
                         Id = shift.Id,
-                        FinalAmount = finalAmount
+                        FinalCashAmount = finalCash,
+                        FinalCardAmount = finalCard,
+                        ExpectedAmount = expectedTotal
                     };
 
                     var updateResult = await mediator.Send(command);
 
                     if (updateResult.Succeeded)
                     {
-                        // Consultar facturas del turno
-                        var dbContext = App.Services.GetRequiredService<DatabaseContext>();
-                        var invoices = await dbContext.Invoices
-                            .Where(i => i.UserId == shift.UserId && i.Date >= shift.StartTime)
-                            .ToListAsync();
-
-                        var totalInvoices = invoices.Count;
-                        var totalSales = invoices.Sum(i => i.Total);
-
                         // Obtener datos de empresa
                         var company = await dbContext.Companies.FirstOrDefaultAsync();
 
@@ -215,8 +247,13 @@ namespace EDA_2._0.Views
                             StartTime = shift.StartTime,
                             EndTime = DateTime.Now,
                             InitialAmount = shift.InitialAmount,
+                            FinalCashAmount = finalCash,
+                            FinalCardAmount = finalCard,
                             FinalAmount = finalAmount,
-                            Difference = finalAmount - shift.InitialAmount,
+                            ExpectedCash = expectedCash,
+                            ExpectedCard = expectedCard,
+                            ExpectedAmount = expectedTotal,
+                            Difference = difference,
                             TotalInvoices = totalInvoices,
                             TotalSales = totalSales,
                             CompanyName = company?.Name ?? "Empresa",
@@ -234,7 +271,7 @@ namespace EDA_2._0.Views
                         var successDialog = new ContentDialog
                         {
                             Title = "Turno Cerrado",
-                            Content = $"Turno cerrado exitosamente.\nDiferencia: L {(finalAmount - shift.InitialAmount):N2}\nFacturas: {totalInvoices}\nTotal Ventas: L {totalSales:N2}",
+                            Content = $"Turno cerrado exitosamente.\nSaldo esperado: L {expectedTotal:N2}\nSaldo reportado: L {finalAmount:N2}\nDiferencia: L {difference:N2}\nFacturas: {totalInvoices}\nTotal Ventas: L {totalSales:N2}",
                             CloseButtonText = "Aceptar",
                             XamlRoot = this.XamlRoot
                         };

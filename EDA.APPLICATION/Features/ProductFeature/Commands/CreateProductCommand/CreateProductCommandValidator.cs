@@ -23,6 +23,9 @@ namespace EDA.APPLICATION.Features.ProductFeature.Commands.CreateProductCommand
             RuleFor(x => x.MinStock)
                 .GreaterThanOrEqualTo(0).WithMessage("El stock mínimo debe ser mayor o igual a 0.");
 
+            RuleFor(x => x.MaxStock)
+                .GreaterThanOrEqualTo(0).WithMessage("El stock máximo debe ser mayor o igual a 0.");
+
             RuleFor(x => x.FamilyId)
                 .GreaterThan(0).WithMessage("Debe seleccionar una familia.");
 

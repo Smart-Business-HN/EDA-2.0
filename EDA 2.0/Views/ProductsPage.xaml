@@ -72,6 +72,8 @@
                         <ColumnDefinition Width="100"/>
                         <ColumnDefinition Width="80"/>
                         <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="100"/>
                         <ColumnDefinition Width="120"/>
                         <ColumnDefinition Width="120"/>
                         <ColumnDefinition Width="Auto" MinWidth="180"/>
@@ -81,9 +83,11 @@
                     <TextBlock Grid.Column="2" Text="Precio" FontWeight="SemiBold" HorizontalAlignment="Right"/>
                     <TextBlock Grid.Column="3" Text="Stock" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                     <TextBlock Grid.Column="4" Text="Min." FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                    <TextBlock Grid.Column="5" Text="Familia" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Column="6" Text="Impuesto" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Column="7" Text="Acciones" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="5" Text="Max." FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="6" Text="Vencimiento" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="7" Text="Familia" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="8" Text="Impuesto" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="9" Text="Acciones" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                 </Grid>
             </ListView.Header>
             <ListView.ItemTemplate>
@@ -95,6 +99,8 @@
                             <ColumnDefinition Width="100"/>
                             <ColumnDefinition Width="80"/>
                             <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="100"/>
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="Auto" MinWidth="180"/>
@@ -104,9 +110,11 @@
                         <TextBlock Grid.Column="2" Text="{Binding Price}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                         <TextBlock Grid.Column="3" Text="{Binding Stock}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         <TextBlock Grid.Column="4" Text="{Binding MinStock}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        <TextBlock Grid.Column="5" Text="{Binding Family.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Grid.Column="6" Text="{Binding Tax.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                        <StackPanel Grid.Column="7" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                        <TextBlock Grid.Column="5" Text="{Binding MaxStock}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="6" Text="{Binding ExpirationDate, TargetNullValue='-'}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="7" Text="{Binding Family.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="8" Text="{Binding Tax.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <StackPanel Grid.Column="9" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
                             <Button
                                 Content="Editar"
                                 Click="EditButton_Click"

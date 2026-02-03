@@ -8,6 +8,11 @@ namespace EDA.INFRAESTRUCTURE.Services
 {
     public class ShiftReportPdfService : IShiftReportPdfService
     {
+        static ShiftReportPdfService()
+        {
+            QuestPDF.Settings.License = LicenseType.Community;
+        }
+
         public byte[] GenerateShiftReportPdf(ShiftReportData data)
         {
             var document = Document.Create(container =>
@@ -52,23 +57,63 @@ namespace EDA.INFRAESTRUCTURE.Services
                         // Separador
                         column.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Colors.Black);
 
-                        // === MONTOS ===
+                        // === SALDO ESPERADO ===
+                        column.Item().Text("SALDO ESPERADO").Bold().FontSize(8);
                         column.Item().Row(row =>
                         {
-                            row.RelativeItem().Text("Monto Inicial:").FontSize(8);
+                            row.RelativeItem().Text("  Saldo Inicial:").FontSize(8);
                             row.ConstantItem(80).AlignRight().Text($"L {data.InitialAmount:N2}").FontSize(8);
                         });
-
                         column.Item().Row(row =>
                         {
-                            row.RelativeItem().Text("Monto Final:").FontSize(8);
-                            row.ConstantItem(80).AlignRight().Text($"L {data.FinalAmount:N2}").FontSize(8);
+                            row.RelativeItem().Text("  (+) Efectivo vendido:").FontSize(8);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.ExpectedCash:N2}").FontSize(8);
+                        });
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("  (+) Tarjeta vendido:").FontSize(8);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.ExpectedCard:N2}").FontSize(8);
+                        });
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("  Total esperado:").Bold().FontSize(8);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.ExpectedAmount:N2}").Bold().FontSize(8);
                         });
 
+                        // Separador
+                        column.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Colors.Black);
+
+                        // === SALDO REPORTADO ===
+                        column.Item().Text("SALDO REPORTADO").Bold().FontSize(8);
                         column.Item().Row(row =>
                         {
-                            row.RelativeItem().Text("Diferencia:").Bold().FontSize(8);
-                            row.ConstantItem(80).AlignRight().Text($"L {data.Difference:N2}").Bold().FontSize(8);
+                            row.RelativeItem().Text("  Saldo Inicial:").FontSize(8);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.InitialAmount:N2}").FontSize(8);
+                        });
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("  (+) Efectivo reportado:").FontSize(8);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.FinalCashAmount:N2}").FontSize(8);
+                        });
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("  (+) Tarjeta reportado:").FontSize(8);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.FinalCardAmount:N2}").FontSize(8);
+                        });
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("  Total reportado:").Bold().FontSize(8);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.FinalAmount:N2}").Bold().FontSize(8);
+                        });
+
+                        // Separador
+                        column.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(Colors.Black);
+
+                        // === DIFERENCIA ===
+                        column.Item().Row(row =>
+                        {
+                            row.RelativeItem().Text("DIFERENCIA:").Bold().FontSize(9);
+                            row.ConstantItem(80).AlignRight().Text($"L {data.Difference:N2}").Bold().FontSize(9);
                         });
 
                         // Separador

@@ -14,6 +14,8 @@ namespace EDA.APPLICATION.Features.ProductFeature.Commands.CreateProductCommand
         public decimal Price { get; set; }
         public int Stock { get; set; }
         public int MinStock { get; set; }
+        public int MaxStock { get; set; }
+        public DateTime? ExpirationDate { get; set; }
         public int FamilyId { get; set; }
         public int TaxId { get; set; }
     }
@@ -60,6 +62,8 @@ namespace EDA.APPLICATION.Features.ProductFeature.Commands.CreateProductCommand
                 Price = request.Price,
                 Stock = request.Stock,
                 MinStock = request.MinStock,
+                MaxStock = request.MaxStock,
+                ExpirationDate = request.ExpirationDate,
                 FamilyId = request.FamilyId,
                 TaxId = request.TaxId
             };

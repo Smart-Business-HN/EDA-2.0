@@ -9,8 +9,11 @@ namespace EDA.APPLICATION.Features.ShiftFeature.Commands.UpdateShiftCommand
             RuleFor(x => x.Id)
                 .GreaterThan(0).WithMessage("Turno invalido.");
 
-            RuleFor(x => x.FinalAmount)
-                .GreaterThanOrEqualTo(0).WithMessage("El monto final debe ser mayor o igual a 0.");
+            RuleFor(x => x.FinalCashAmount)
+                .GreaterThanOrEqualTo(0).WithMessage("El efectivo debe ser mayor o igual a 0.");
+
+            RuleFor(x => x.FinalCardAmount)
+                .GreaterThanOrEqualTo(0).WithMessage("El monto en tarjeta debe ser mayor o igual a 0.");
         }
     }
 }

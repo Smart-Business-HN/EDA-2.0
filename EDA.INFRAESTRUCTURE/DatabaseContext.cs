@@ -222,7 +222,10 @@ namespace EDA.INFRAESTRUCTURE
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.ShiftType).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.InitialAmount).HasPrecision(18, 2);
+                entity.Property(e => e.FinalCashAmount).HasPrecision(18, 2);
+                entity.Property(e => e.FinalCardAmount).HasPrecision(18, 2);
                 entity.Property(e => e.FinalAmount).HasPrecision(18, 2);
+                entity.Property(e => e.ExpectedAmount).HasPrecision(18, 2);
                 entity.Property(e => e.Difference).HasPrecision(18, 2);
                 entity.HasOne(e => e.User)
                       .WithMany()

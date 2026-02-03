@@ -8,7 +8,9 @@ namespace EDA.APPLICATION.Features.ShiftFeature.Commands.UpdateShiftCommand
     public class UpdateShiftCommand : IRequest<Result<Shift>>
     {
         public int Id { get; set; }
-        public decimal FinalAmount { get; set; }
+        public decimal FinalCashAmount { get; set; }
+        public decimal FinalCardAmount { get; set; }
+        public decimal ExpectedAmount { get; set; }
     }
 
     public class UpdateShiftCommandHandler : IRequestHandler<UpdateShiftCommand, Result<Shift>>
@@ -35,8 +37,11 @@ namespace EDA.APPLICATION.Features.ShiftFeature.Commands.UpdateShiftCommand
             }
 
             shift.EndTime = DateTime.Now;
-            shift.FinalAmount = request.FinalAmount;
-            shift.Difference = request.FinalAmount - shift.InitialAmount;
+            shift.FinalCashAmount = request.FinalCashAmount;
+            shift.FinalCardAmount = request.FinalCardAmount;
+            shift.FinalAmount = request.FinalCashAmount + request.FinalCardAmount + shift.InitialAmount;
+            shift.ExpectedAmount = request.ExpectedAmount;
+            shift.Difference = shift.ExpectedAmount - shift.FinalAmount;
             shift.IsOpen = false;
 
             await _repositoryAsync.UpdateAsync(shift, cancellationToken);

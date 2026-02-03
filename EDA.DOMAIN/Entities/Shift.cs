@@ -11,7 +11,10 @@ namespace EDA.DOMAIN.Entities
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public decimal InitialAmount { get; set; }
+        public decimal? FinalCashAmount { get; set; }
+        public decimal? FinalCardAmount { get; set; }
         public decimal? FinalAmount { get; set; }
+        public decimal? ExpectedAmount { get; set; }
         public decimal? Difference { get; set; }
         public bool IsOpen { get; set; }
     }

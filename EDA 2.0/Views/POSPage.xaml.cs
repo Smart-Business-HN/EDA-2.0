@@ -683,30 +683,29 @@ namespace EDA_2._0.Views
 
         private void UpdateTotals()
         {
-            // Calcular subtotal
-            decimal subtotal = _cartItems.Sum(c => c.Subtotal);
+            // El precio ingresado ya incluye impuesto, hay que desglosarlo
+            decimal totalBruto = _cartItems.Sum(c => c.Subtotal);
 
-            // Calcular descuento
-            decimal discountAmount = 0;
-            if (_selectedDiscount != null)
-            {
-                discountAmount = subtotal * (_selectedDiscount.Percentage / 100m);
-            }
+            // Calcular descuento sobre el precio con impuesto incluido
+            decimal discountPercentage = _selectedDiscount?.Percentage ?? 0m;
+            decimal discountAmount = totalBruto * (discountPercentage / 100m);
 
-            // Calcular impuesto (promedio de los impuestos de los productos)
+            // Extraer impuesto del precio (el precio ya incluye impuesto)
             decimal taxAmount = 0;
             foreach (var item in _cartItems)
             {
                 if (item.Product.Tax != null)
                 {
-                    var itemSubtotal = item.Subtotal;
-                    var itemAfterDiscount = itemSubtotal - (itemSubtotal * (_selectedDiscount?.Percentage ?? 0) / 100m);
-                    taxAmount += itemAfterDiscount * (item.Product.Tax.Percentage / 100m);
+                    var itemTotal = item.Subtotal;
+                    var itemAfterDiscount = itemTotal - (itemTotal * discountPercentage / 100m);
+                    var taxRate = item.Product.Tax.Percentage / 100m;
+                    taxAmount += itemAfterDiscount * (taxRate / (1m + taxRate));
                 }
             }
 
-            // Calcular total
-            decimal total = subtotal - discountAmount + taxAmount;
+            // Subtotal = total bruto - descuento - impuesto (precio sin impuesto)
+            decimal subtotal = totalBruto - discountAmount - taxAmount;
+            decimal total = totalBruto - discountAmount;
 
             // Calcular pagos
             decimal totalPaid = _paymentItems.Sum(p => p.Amount);
@@ -1489,8 +1488,9 @@ namespace EDA_2._0.Views
         {
             try
             {
-                // Validar turno abierto
-                if (App.CurrentShift == null || !App.CurrentShift.IsOpen)
+                // Validar turno abierto (admin no requiere turno)
+                if (App.CurrentUser?.RoleId != (int)EDA.DOMAIN.Enums.RoleEnum.Admin
+                    && (App.CurrentShift == null || !App.CurrentShift.IsOpen))
                 {
                     await ShowError("Debe tener un turno abierto para facturar.");
                     return;
@@ -1537,23 +1537,25 @@ namespace EDA_2._0.Views
                     return;
                 }
 
-                // Calcular totales
-                decimal subtotal = _cartItems.Sum(c => c.Subtotal);
+                // Calcular totales (precio ya incluye impuesto)
+                decimal totalBruto = _cartItems.Sum(c => c.Subtotal);
                 decimal discountPercentage = _selectedDiscount?.Percentage ?? 0m;
-                decimal discountAmount = subtotal * discountPercentage / 100m;
+                decimal discountAmount = totalBruto * discountPercentage / 100m;
                 decimal taxAmount = 0m;
 
                 foreach (var item in _cartItems)
                 {
                     if (item.Product.Tax != null)
                     {
-                        var itemSubtotal = item.Subtotal;
-                        var itemAfterDiscount = itemSubtotal - (itemSubtotal * discountPercentage / 100m);
-                        taxAmount += itemAfterDiscount * (item.Product.Tax.Percentage / 100m);
+                        var itemTotal = item.Subtotal;
+                        var itemAfterDiscount = itemTotal - (itemTotal * discountPercentage / 100m);
+                        var taxRate = item.Product.Tax.Percentage / 100m;
+                        taxAmount += itemAfterDiscount * (taxRate / (1m + taxRate));
                     }
                 }
 
-                decimal total = subtotal - discountAmount + taxAmount;
+                decimal subtotal = totalBruto - discountAmount - taxAmount;
+                decimal total = totalBruto - discountAmount;
                 decimal totalPaid = _paymentItems.Sum(p => p.Amount);
 
                 // Calcular efectivo y cambio

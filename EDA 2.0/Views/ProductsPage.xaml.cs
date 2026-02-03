@@ -165,6 +165,8 @@ namespace EDA_2._0.Views
             decimal priceResult = 0;
             int stockResult = 0;
             int minStockResult = 0;
+            int maxStockResult = 0;
+            DateTime? expirationDateResult = null;
             DateTime? dateResult = null;
 
             // Loop para manejar el caso de crear familia y volver al diálogo
@@ -218,6 +220,35 @@ namespace EDA_2._0.Views
                     SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
                     Margin = new Thickness(0, 0, 0, 12)
                 };
+
+                var maxStockNumberBox = new NumberBox
+                {
+                    Header = "Stock Máximo",
+                    PlaceholderText = "0 = sin máximo",
+                    Value = shouldSave ? maxStockResult : (product?.MaxStock ?? 0),
+                    Minimum = 0,
+                    SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
+                    Margin = new Thickness(0, 0, 0, 12)
+                };
+
+                var expirationDatePicker = new DatePicker
+                {
+                    Header = "Fecha de Vencimiento",
+                    Date = shouldSave && expirationDateResult.HasValue
+                        ? new DateTimeOffset(expirationDateResult.Value)
+                        : (product?.ExpirationDate != null ? new DateTimeOffset(product.ExpirationDate.Value) : DateTimeOffset.Now),
+                    Margin = new Thickness(0, 0, 0, 12)
+                };
+
+                var expirationCheckBox = new CheckBox
+                {
+                    Content = "Tiene fecha de vencimiento",
+                    IsChecked = shouldSave ? expirationDateResult.HasValue : product?.ExpirationDate != null,
+                    Margin = new Thickness(0, 0, 0, 4)
+                };
+                expirationDatePicker.Visibility = (expirationCheckBox.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
+                expirationCheckBox.Checked += (s, a) => expirationDatePicker.Visibility = Visibility.Visible;
+                expirationCheckBox.Unchecked += (s, a) => expirationDatePicker.Visibility = Visibility.Collapsed;
 
                 // ComboBox de Familia con botón de crear
                 var familyComboBox = new ComboBox
@@ -301,7 +332,7 @@ namespace EDA_2._0.Views
                 var content = new StackPanel
                 {
                     Width = 400,
-                    Children = { nameTextBox, barcodeTextBox, priceNumberBox, stockNumberBox, minStockNumberBox, familyPanel, taxComboBox, datePicker }
+                    Children = { nameTextBox, barcodeTextBox, priceNumberBox, stockNumberBox, minStockNumberBox, maxStockNumberBox, expirationCheckBox, expirationDatePicker, familyPanel, taxComboBox, datePicker }
                 };
 
                 mainDialog = new ContentDialog
@@ -322,6 +353,8 @@ namespace EDA_2._0.Views
                 priceResult = double.IsNaN(priceNumberBox.Value) ? 0 : (decimal)priceNumberBox.Value;
                 stockResult = double.IsNaN(stockNumberBox.Value) ? 0 : (int)stockNumberBox.Value;
                 minStockResult = double.IsNaN(minStockNumberBox.Value) ? 0 : (int)minStockNumberBox.Value;
+                maxStockResult = double.IsNaN(maxStockNumberBox.Value) ? 0 : (int)maxStockNumberBox.Value;
+                expirationDateResult = expirationCheckBox.IsChecked == true ? expirationDatePicker.Date.DateTime : null;
                 dateResult = datePicker.Date.DateTime;
                 selectedFamilyResult = familyComboBox.SelectedItem as Family;
                 selectedTaxResult = taxComboBox.SelectedItem as Tax;
@@ -361,6 +394,8 @@ namespace EDA_2._0.Views
                         priceResult,
                         stockResult,
                         minStockResult,
+                        maxStockResult,
+                        expirationDateResult,
                         selectedFamilyResult.Id,
                         selectedTaxResult.Id,
                         isEdit);
@@ -436,7 +471,7 @@ namespace EDA_2._0.Views
             return null;
         }
 
-        private async Task SaveProduct(int? id, string name, string? barcode, DateTime? date, decimal price, int stock, int minStock, int familyId, int taxId, bool isEdit)
+        private async Task SaveProduct(int? id, string name, string? barcode, DateTime? date, decimal price, int stock, int minStock, int maxStock, DateTime? expirationDate, int familyId, int taxId, bool isEdit)
         {
             SetLoading(true);
 
@@ -453,6 +488,8 @@ namespace EDA_2._0.Views
                         Price = price,
                         Stock = stock,
                         MinStock = minStock,
+                        MaxStock = maxStock,
+                        ExpirationDate = expirationDate,
                         FamilyId = familyId,
                         TaxId = taxId
                     };
@@ -479,6 +516,8 @@ namespace EDA_2._0.Views
                         Price = price,
                         Stock = stock,
                         MinStock = minStock,
+                        MaxStock = maxStock,
+                        ExpirationDate = expirationDate,
                         FamilyId = familyId,
                         TaxId = taxId
                     };

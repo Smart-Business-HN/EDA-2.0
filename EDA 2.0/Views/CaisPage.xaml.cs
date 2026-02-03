@@ -218,29 +218,18 @@ namespace EDA_2._0.Views
                 Margin = new Thickness(0, 0, 0, 12)
             };
 
-            // Mostrar información adicional si es edición
-            StackPanel? infoPanel = null;
+            // Campo editable para correlativo actual (solo en edición)
+            NumberBox? currentCorrelativeBox = null;
             if (isEdit && cai != null)
             {
-                infoPanel = new StackPanel
+                currentCorrelativeBox = new NumberBox
                 {
-                    Margin = new Thickness(0, 0, 0, 12),
-                    Padding = new Thickness(12),
-                    Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
-                    CornerRadius = new CornerRadius(4),
-                    Children =
-                    {
-                        new TextBlock
-                        {
-                            Text = $"Correlativo actual: {cai.CurrentCorrelative}",
-                            FontSize = 12
-                        },
-                        new TextBlock
-                        {
-                            Text = $"Facturas pendientes: {cai.PendingInvoices}",
-                            FontSize = 12
-                        }
-                    }
+                    Header = "Correlativo actual (número de siguiente factura)",
+                    PlaceholderText = "Ejemplo: 73",
+                    Value = cai.CurrentCorrelative,
+                    Minimum = 1,
+                    SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
+                    Margin = new Thickness(0, 0, 0, 12)
                 };
             }
 
@@ -256,17 +245,25 @@ namespace EDA_2._0.Views
             content.Children.Add(toDatePicker);
             content.Children.Add(initialCorrelativeBox);
             content.Children.Add(finalCorrelativeBox);
+
+            if (currentCorrelativeBox != null)
+            {
+                content.Children.Add(currentCorrelativeBox);
+            }
+
             content.Children.Add(isActiveToggle);
 
-            if (infoPanel != null)
+            var scrollViewer = new ScrollViewer
             {
-                content.Children.Add(infoPanel);
-            }
+                Content = content,
+                MaxHeight = 500,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+            };
 
             var dialog = new ContentDialog
             {
                 Title = isEdit ? "Editar CAI" : "Nuevo CAI",
-                Content = content,
+                Content = scrollViewer,
                 PrimaryButtonText = "Guardar",
                 CloseButtonText = "Cancelar",
                 DefaultButton = ContentDialogButton.Primary,
@@ -311,6 +308,12 @@ namespace EDA_2._0.Views
                     return;
                 }
 
+                int? currentCorrelative = null;
+                if (currentCorrelativeBox != null && !double.IsNaN(currentCorrelativeBox.Value))
+                {
+                    currentCorrelative = (int)currentCorrelativeBox.Value;
+                }
+
                 await SaveCai(
                     cai?.Id,
                     nameTextBox.Text?.Trim() ?? string.Empty,
@@ -321,6 +324,7 @@ namespace EDA_2._0.Views
                     finalCorrelative,
                     prefix,
                     isActiveToggle.IsOn,
+                    currentCorrelative,
                     isEdit);
             }
         }
@@ -402,7 +406,7 @@ namespace EDA_2._0.Views
         }
 
         private async Task SaveCai(int? id, string name, string code, DateTime fromDate, DateTime toDate,
-            int initialCorrelative, int finalCorrelative, string prefix, bool isActive, bool isEdit)
+            int initialCorrelative, int finalCorrelative, string prefix, bool isActive, int? currentCorrelative, bool isEdit)
         {
             SetLoading(true);
 
@@ -420,7 +424,8 @@ namespace EDA_2._0.Views
                         InitialCorrelative = initialCorrelative,
                         FinalCorrelative = finalCorrelative,
                         Prefix = prefix,
-                        IsActive = isActive
+                        IsActive = isActive,
+                        CurrentCorrelative = currentCorrelative
                     };
 
                     var result = await _mediator.Send(command);

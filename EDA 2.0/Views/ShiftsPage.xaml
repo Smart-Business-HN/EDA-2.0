@@ -127,6 +127,13 @@
                                 Content="Cerrar Turno"
                                 Click="CloseShiftButton_Click"
                                 Tag="{Binding}"/>
+                            <Button
+                                x:Name="DeleteShiftButton"
+                                Content="Eliminar"
+                                Click="DeleteButton_Click"
+                                Tag="{Binding}"
+                                Foreground="#FFD32F2F"
+                                Visibility="Collapsed"/>
                         </StackPanel>
                     </Grid>
                 </DataTemplate>

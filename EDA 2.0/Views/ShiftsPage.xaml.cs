@@ -268,27 +268,55 @@ namespace EDA_2._0.Views
                     return;
                 }
 
-                var finalAmountBox = new NumberBox
+                // Consultar pagos del turno
+                var dbContext = App.Services.GetRequiredService<DatabaseContext>();
+                var invoiceIds = await dbContext.Invoices
+                    .Where(i => i.UserId == shift.UserId && i.Date >= shift.StartTime)
+                    .Select(i => i.Id)
+                    .ToListAsync();
+
+                var payments = await dbContext.InvoicePayments
+                    .Where(p => invoiceIds.Contains(p.InvoiceId))
+                    .ToListAsync();
+
+                var expectedCash = payments.Where(p => p.PaymentTypeId == 1).Sum(p => p.Amount);
+                var expectedCard = payments.Where(p => p.PaymentTypeId == 3 || p.PaymentTypeId == 2).Sum(p => p.Amount);
+                var expectedTotal = shift.InitialAmount + expectedCash + expectedCard;
+
+                var totalInvoices = invoiceIds.Count;
+                var totalSales = await dbContext.Invoices
+                    .Where(i => invoiceIds.Contains(i.Id))
+                    .SumAsync(i => i.Total);
+
+                var infoText = new TextBlock
                 {
-                    Header = "Monto final en caja *",
+                    Text = $"Usuario: {shift.User?.Name}\nTurno: {shift.ShiftType}\nInicio: {shift.StartTime:dd/MM/yyyy HH:mm}\nSaldo inicial: L {shift.InitialAmount:N2}\n\nVentas en efectivo: L {expectedCash:N2}\nVentas en tarjeta: L {expectedCard:N2}\nSaldo esperado: L {expectedTotal:N2}",
+                    Margin = new Thickness(0, 0, 0, 12)
+                };
+
+                var cashBox = new NumberBox
+                {
+                    Header = "Efectivo en caja *",
                     PlaceholderText = "0.00",
                     Value = double.NaN,
                     Minimum = 0,
                     SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
-                    Margin = new Thickness(0, 0, 0, 12)
+                    Margin = new Thickness(0, 0, 0, 8)
                 };
 
-                var infoText = new TextBlock
+                var cardBox = new NumberBox
                 {
-                    Text = $"Monto inicial: L {shift.InitialAmount:N2}\nInicio: {shift.StartTime:dd/MM/yyyy HH:mm}",
-                    Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
-                    Margin = new Thickness(0, 0, 0, 12)
+                    Header = "Total en tarjeta *",
+                    PlaceholderText = "0.00",
+                    Value = double.NaN,
+                    Minimum = 0,
+                    SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
                 };
 
                 var content = new StackPanel
                 {
                     Width = 400,
-                    Children = { infoText, finalAmountBox }
+                    Children = { infoText, cashBox, cardBox }
                 };
 
                 var dialog = new ContentDialog
@@ -305,13 +333,14 @@ namespace EDA_2._0.Views
 
                 if (result == ContentDialogResult.Primary)
                 {
-                    decimal finalAmount = double.IsNaN(finalAmountBox.Value) ? 0 : (decimal)finalAmountBox.Value;
-                    await CloseShift(shift.Id, finalAmount, shift);
+                    decimal finalCash = double.IsNaN(cashBox.Value) ? 0 : (decimal)cashBox.Value;
+                    decimal finalCard = double.IsNaN(cardBox.Value) ? 0 : (decimal)cardBox.Value;
+                    await CloseShift(shift, finalCash, finalCard, expectedCash, expectedCard, expectedTotal, totalInvoices, totalSales);
                 }
             }
         }
 
-        private async Task CloseShift(int shiftId, decimal finalAmount, Shift shift)
+        private async Task CloseShift(Shift shift, decimal finalCash, decimal finalCard, decimal expectedCash, decimal expectedCard, decimal expectedTotal, int totalInvoices, decimal totalSales)
         {
             SetLoading(true);
 
@@ -319,27 +348,22 @@ namespace EDA_2._0.Views
             {
                 var command = new UpdateShiftCommand
                 {
-                    Id = shiftId,
-                    FinalAmount = finalAmount
+                    Id = shift.Id,
+                    FinalCashAmount = finalCash,
+                    FinalCardAmount = finalCard,
+                    ExpectedAmount = expectedTotal
                 };
 
                 var result = await _mediator.Send(command);
 
                 if (result.Succeeded)
                 {
-                    // Consultar facturas del turno
+                    decimal finalAmount = finalCash + finalCard + shift.InitialAmount;
+                    decimal difference = expectedTotal - finalAmount;
+
                     var dbContext = App.Services.GetRequiredService<DatabaseContext>();
-                    var invoices = await dbContext.Invoices
-                        .Where(i => i.UserId == shift.UserId && i.Date >= shift.StartTime)
-                        .ToListAsync();
-
-                    var totalInvoices = invoices.Count;
-                    var totalSales = invoices.Sum(i => i.Total);
-
-                    // Obtener datos de empresa
                     var company = await dbContext.Companies.FirstOrDefaultAsync();
 
-                    // Generar PDF
                     var pdfService = App.Services.GetRequiredService<IShiftReportPdfService>();
                     var reportData = new ShiftReportData
                     {
@@ -348,8 +372,13 @@ namespace EDA_2._0.Views
                         StartTime = shift.StartTime,
                         EndTime = DateTime.Now,
                         InitialAmount = shift.InitialAmount,
+                        FinalCashAmount = finalCash,
+                        FinalCardAmount = finalCard,
                         FinalAmount = finalAmount,
-                        Difference = finalAmount - shift.InitialAmount,
+                        ExpectedCash = expectedCash,
+                        ExpectedCard = expectedCard,
+                        ExpectedAmount = expectedTotal,
+                        Difference = difference,
                         TotalInvoices = totalInvoices,
                         TotalSales = totalSales,
                         CompanyName = company?.Name ?? "Empresa",
@@ -465,8 +494,6 @@ namespace EDA_2._0.Views
         {
             if (args.Item is Shift shift)
             {
-                // Find the status border and style it
-                // We handle button visibility in code
                 var container = args.ItemContainer;
 
                 if (shift.IsOpen)
@@ -478,7 +505,30 @@ namespace EDA_2._0.Views
                 {
                     container.Background = null;
                 }
+
+                // Mostrar botón eliminar solo para admin y turnos cerrados
+                var deleteBtn = FindChildByName<Button>(container, "DeleteShiftButton");
+                if (deleteBtn != null)
+                {
+                    bool isAdmin = App.CurrentUser?.RoleId == (int)EDA.DOMAIN.Enums.RoleEnum.Admin;
+                    deleteBtn.Visibility = (isAdmin && !shift.IsOpen) ? Visibility.Visible : Visibility.Collapsed;
+                }
             }
+        }
+
+        private static T? FindChildByName<T>(Microsoft.UI.Xaml.DependencyObject parent, string name) where T : FrameworkElement
+        {
+            int childCount = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetChild(parent, i);
+                if (child is T element && element.Name == name)
+                    return element;
+                var result = FindChildByName<T>(child, name);
+                if (result != null)
+                    return result;
+            }
+            return null;
         }
 
         private void SetLoading(bool isLoading)

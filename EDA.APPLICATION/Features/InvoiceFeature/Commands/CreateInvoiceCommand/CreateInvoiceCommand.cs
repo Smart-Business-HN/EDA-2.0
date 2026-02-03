@@ -53,17 +53,20 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
         private readonly IRepositoryAsync<Cai> _caiRepository;
         private readonly IRepositoryAsync<SoldProduct> _soldProductRepository;
         private readonly IRepositoryAsync<InvoicePayment> _paymentRepository;
+        private readonly IRepositoryAsync<Product> _productRepository;
 
         public CreateInvoiceCommandHandler(
             IRepositoryAsync<Invoice> invoiceRepository,
             IRepositoryAsync<Cai> caiRepository,
             IRepositoryAsync<SoldProduct> soldProductRepository,
-            IRepositoryAsync<InvoicePayment> paymentRepository)
+            IRepositoryAsync<InvoicePayment> paymentRepository,
+            IRepositoryAsync<Product> productRepository)
         {
             _invoiceRepository = invoiceRepository;
             _caiRepository = caiRepository;
             _soldProductRepository = soldProductRepository;
             _paymentRepository = paymentRepository;
+            _productRepository = productRepository;
         }
 
         public async Task<Result<Invoice>> Handle(CreateInvoiceCommand request, CancellationToken cancellationToken)
@@ -193,6 +196,19 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
                 await _soldProductRepository.AddAsync(soldProduct, cancellationToken);
             }
             await _soldProductRepository.SaveChangesAsync(cancellationToken);
+
+            // 6.5. Reducir stock de productos vendidos
+            foreach (var item in request.Items)
+            {
+                var product = await _productRepository.GetByIdAsync(item.ProductId, cancellationToken);
+                if (product != null)
+                {
+                    product.Stock -= item.Quantity;
+                    if (product.Stock < 0) product.Stock = 0;
+                    await _productRepository.UpdateAsync(product, cancellationToken);
+                }
+            }
+            await _productRepository.SaveChangesAsync(cancellationToken);
 
             // 7. Crear registros InvoicePayment
             foreach (var payment in request.Payments)

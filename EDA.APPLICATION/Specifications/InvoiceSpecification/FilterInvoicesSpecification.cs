@@ -157,6 +157,14 @@ namespace EDA.APPLICATION.Specifications.InvoiceSpecification
         }
     }
 
+    public sealed class GetInvoiceByNumberSpecification : Specification<Invoice>, ISingleResultSpecification<Invoice>
+    {
+        public GetInvoiceByNumberSpecification(string invoiceNumber)
+        {
+            Query.Where(invoice => invoice.InvoiceNumber == invoiceNumber);
+        }
+    }
+
     public sealed class GetInvoiceByIdSpecification : Specification<Invoice>, ISingleResultSpecification<Invoice>
     {
         public GetInvoiceByIdSpecification(int id)

@@ -17,15 +17,18 @@ namespace EDA.APPLICATION.Features.CaiFeature.Commands.UpdateCaiCommand
         public int FinalCorrelative { get; set; }
         public string Prefix { get; set; } = null!;
         public bool IsActive { get; set; }
+        public int? CurrentCorrelative { get; set; }
     }
 
     public class UpdateCaiCommandHandler : IRequestHandler<UpdateCaiCommand, Result<Cai>>
     {
         private readonly IRepositoryAsync<Cai> _repositoryAsync;
+        private readonly IRepositoryAsync<Invoice> _invoiceRepository;
 
-        public UpdateCaiCommandHandler(IRepositoryAsync<Cai> repositoryAsync)
+        public UpdateCaiCommandHandler(IRepositoryAsync<Cai> repositoryAsync, IRepositoryAsync<Invoice> invoiceRepository)
         {
             _repositoryAsync = repositoryAsync;
+            _invoiceRepository = invoiceRepository;
         }
 
         public async Task<Result<Cai>> Handle(UpdateCaiCommand request, CancellationToken cancellationToken)
@@ -60,11 +63,32 @@ namespace EDA.APPLICATION.Features.CaiFeature.Commands.UpdateCaiCommand
             // Validar que no se modifiquen los correlativos si ya se han usado facturas
             if (cai.CurrentCorrelative > cai.InitialCorrelative)
             {
-                // Ya se han emitido facturas, no permitir cambiar correlativos
                 if (request.InitialCorrelative != cai.InitialCorrelative)
                 {
                     return new Result<Cai>("No se puede modificar el correlativo inicial porque ya se han emitido facturas con este CAI.");
                 }
+            }
+
+            // Si se proporciona un nuevo correlativo actual, aplicarlo
+            if (request.CurrentCorrelative.HasValue)
+            {
+                if (request.CurrentCorrelative.Value < request.InitialCorrelative || request.CurrentCorrelative.Value > request.FinalCorrelative)
+                {
+                    return new Result<Cai>("El correlativo actual debe estar entre el correlativo inicial y final.");
+                }
+
+                // Verificar que el número de factura del nuevo correlativo no haya sido emitido ya
+                string targetInvoiceNumber = $"{cai.Prefix}{request.CurrentCorrelative.Value:D8}";
+                var existingInvoice = await _invoiceRepository.FirstOrDefaultAsync(
+                    new Specifications.InvoiceSpecification.GetInvoiceByNumberSpecification(targetInvoiceNumber),
+                    cancellationToken);
+
+                if (existingInvoice != null)
+                {
+                    return new Result<Cai>($"No se puede asignar el correlativo {request.CurrentCorrelative.Value} porque la factura {targetInvoiceNumber} ya fue emitida.");
+                }
+
+                cai.CurrentCorrelative = request.CurrentCorrelative.Value;
             }
 
             // Recalcular PendingInvoices basado en el nuevo FinalCorrelative y CurrentCorrelative

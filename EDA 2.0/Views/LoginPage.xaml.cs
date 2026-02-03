@@ -59,18 +59,26 @@ namespace EDA_2._0.Views
                 {
                     App.CurrentUser = result.Data;
 
-                    // Verificar si tiene turno abierto
-                    var openShift = await _dbContext.Shifts
-                        .FirstOrDefaultAsync(s => s.UserId == result.Data.Id && s.IsOpen);
-
-                    if (openShift != null)
+                    // Admin no requiere apertura de turno
+                    if (result.Data.RoleId == (int)EDA.DOMAIN.Enums.RoleEnum.Admin)
                     {
-                        App.CurrentShift = openShift;
                         App.MainWindow.NavigateToPage(typeof(MainMenuPage));
                     }
                     else
                     {
-                        await ShowOpenShiftDialog(result.Data);
+                        // Verificar si tiene turno abierto
+                        var openShift = await _dbContext.Shifts
+                            .FirstOrDefaultAsync(s => s.UserId == result.Data.Id && s.IsOpen);
+
+                        if (openShift != null)
+                        {
+                            App.CurrentShift = openShift;
+                            App.MainWindow.NavigateToPage(typeof(MainMenuPage));
+                        }
+                        else
+                        {
+                            await ShowOpenShiftDialog(result.Data);
+                        }
                     }
                 }
                 else
