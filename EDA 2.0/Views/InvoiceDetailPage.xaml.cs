@@ -1,10 +1,9 @@
 using EDA.APPLICATION.DTOs;
+using EDA.APPLICATION.Features.CompanyFeature.Queries;
 using EDA.APPLICATION.Features.InvoiceFeature.Queries.GetInvoiceByIdQuery;
 using EDA.APPLICATION.Interfaces;
 using EDA.DOMAIN.Entities;
-using EDA.INFRAESTRUCTURE;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -19,7 +18,6 @@ namespace EDA_2._0.Views
     public sealed partial class InvoiceDetailPage : Page
     {
         private readonly IMediator _mediator;
-        private readonly DatabaseContext _dbContext;
         private int _invoiceId;
         private Invoice? _invoice;
 
@@ -27,7 +25,6 @@ namespace EDA_2._0.Views
         {
             InitializeComponent();
             _mediator = App.Services.GetRequiredService<IMediator>();
-            _dbContext = App.Services.GetRequiredService<DatabaseContext>();
         }
 
         public void SetInvoiceId(int invoiceId)
@@ -133,15 +130,12 @@ namespace EDA_2._0.Views
             try
             {
                 // Obtener datos de la empresa
-                var company = await _dbContext.Companies.FirstOrDefaultAsync();
-                if (company == null)
+                var companyResult = await _mediator.Send(new GetCompanyQuery());
+                var company = companyResult.Data ?? new Company
                 {
-                    company = new Company
-                    {
-                        Name = "Mi Empresa",
-                        Owner = "Propietario"
-                    };
-                }
+                    Name = "Mi Empresa",
+                    Owner = "Propietario"
+                };
 
                 // Construir datos para el PDF
                 var pdfData = new InvoicePdfData

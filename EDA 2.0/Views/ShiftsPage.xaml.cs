@@ -1,4 +1,5 @@
 using EDA.APPLICATION.DTOs;
+using EDA.APPLICATION.Features.CompanyFeature.Queries;
 using EDA.APPLICATION.Features.ShiftFeature.Commands.CreateShiftCommand;
 using EDA.APPLICATION.Features.ShiftFeature.Commands.DeleteShiftCommand;
 using EDA.APPLICATION.Features.ShiftFeature.Commands.UpdateShiftCommand;
@@ -6,9 +7,7 @@ using EDA.APPLICATION.Features.ShiftFeature.Queries;
 using EDA.APPLICATION.Features.UserFeature.Queries;
 using EDA.APPLICATION.Interfaces;
 using EDA.DOMAIN.Entities;
-using EDA.INFRAESTRUCTURE;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -268,29 +267,25 @@ namespace EDA_2._0.Views
                     return;
                 }
 
-                // Consultar pagos del turno
-                var dbContext = App.Services.GetRequiredService<DatabaseContext>();
-                var invoiceIds = await dbContext.Invoices
-                    .Where(i => i.UserId == shift.UserId && i.Date >= shift.StartTime)
-                    .Select(i => i.Id)
-                    .ToListAsync();
+                // Obtener datos de cierre del turno via Query
+                var closingResult = await _mediator.Send(new GetShiftClosingDataQuery
+                {
+                    UserId = shift.UserId,
+                    ShiftStartTime = shift.StartTime,
+                    InitialAmount = shift.InitialAmount
+                });
 
-                var payments = await dbContext.InvoicePayments
-                    .Where(p => invoiceIds.Contains(p.InvoiceId))
-                    .ToListAsync();
+                if (!closingResult.Succeeded || closingResult.Data == null)
+                {
+                    await ShowError("Error al obtener datos del turno.");
+                    return;
+                }
 
-                var expectedCash = payments.Where(p => p.PaymentTypeId == 1).Sum(p => p.Amount);
-                var expectedCard = payments.Where(p => p.PaymentTypeId == 3 || p.PaymentTypeId == 2).Sum(p => p.Amount);
-                var expectedTotal = shift.InitialAmount + expectedCash + expectedCard;
-
-                var totalInvoices = invoiceIds.Count;
-                var totalSales = await dbContext.Invoices
-                    .Where(i => invoiceIds.Contains(i.Id))
-                    .SumAsync(i => i.Total);
+                var closingData = closingResult.Data;
 
                 var infoText = new TextBlock
                 {
-                    Text = $"Usuario: {shift.User?.Name}\nTurno: {shift.ShiftType}\nInicio: {shift.StartTime:dd/MM/yyyy HH:mm}\nSaldo inicial: L {shift.InitialAmount:N2}\n\nVentas en efectivo: L {expectedCash:N2}\nVentas en tarjeta: L {expectedCard:N2}\nSaldo esperado: L {expectedTotal:N2}",
+                    Text = $"Usuario: {shift.User?.Name}\nTurno: {shift.ShiftType}\nInicio: {shift.StartTime:dd/MM/yyyy HH:mm}\nSaldo inicial: L {shift.InitialAmount:N2}\n\nVentas en efectivo: L {closingData.ExpectedCash:N2}\nVentas en tarjeta: L {closingData.ExpectedCard:N2}\nSaldo esperado: L {closingData.ExpectedTotal:N2}",
                     Margin = new Thickness(0, 0, 0, 12)
                 };
 
@@ -335,7 +330,7 @@ namespace EDA_2._0.Views
                 {
                     decimal finalCash = double.IsNaN(cashBox.Value) ? 0 : (decimal)cashBox.Value;
                     decimal finalCard = double.IsNaN(cardBox.Value) ? 0 : (decimal)cardBox.Value;
-                    await CloseShift(shift, finalCash, finalCard, expectedCash, expectedCard, expectedTotal, totalInvoices, totalSales);
+                    await CloseShift(shift, finalCash, finalCard, closingData.ExpectedCash, closingData.ExpectedCard, closingData.ExpectedTotal, closingData.TotalInvoices, closingData.TotalSales);
                 }
             }
         }
@@ -361,8 +356,8 @@ namespace EDA_2._0.Views
                     decimal finalAmount = finalCash + finalCard + shift.InitialAmount;
                     decimal difference = expectedTotal - finalAmount;
 
-                    var dbContext = App.Services.GetRequiredService<DatabaseContext>();
-                    var company = await dbContext.Companies.FirstOrDefaultAsync();
+                    var companyResult = await _mediator.Send(new GetCompanyQuery());
+                    var company = companyResult.Data;
 
                     var pdfService = App.Services.GetRequiredService<IShiftReportPdfService>();
                     var reportData = new ShiftReportData

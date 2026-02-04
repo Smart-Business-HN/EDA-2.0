@@ -14,6 +14,19 @@
     <Nullable>enable</Nullable>
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!-- Version Info -->
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+  </PropertyGroup>
+
+  <!-- AppInstaller Auto-Update Settings (Release only) -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <GenerateAppInstallerFile>True</GenerateAppInstallerFile>
+    <AppInstallerUri>https://example.com/app/</AppInstallerUri>
+    <AppInstallerCheckForUpdateFrequency>OnLaunch</AppInstallerCheckForUpdateFrequency>
+    <AppInstallerShowPrompt>True</AppInstallerShowPrompt>
+    <AppInstallerUpdateBlocksActivation>False</AppInstallerUpdateBlocksActivation>
   </PropertyGroup>
 
   <ItemGroup>

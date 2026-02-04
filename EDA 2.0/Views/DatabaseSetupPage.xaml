@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="EDA_2._0.Views.DatabaseSetupPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EDA_2._0.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        MaxWidth="500"
+                        Padding="40"
+                        Spacing="24">
+
+                <!-- Header -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Configuracion Inicial"
+                               Style="{StaticResource TitleTextBlockStyle}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Configure la conexion a la base de datos"
+                               Style="{StaticResource SubtitleTextBlockStyle}"
+                               HorizontalAlignment="Center"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+
+                <!-- Database Type Selection -->
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Tipo de conexion"
+                               Style="{StaticResource BodyStrongTextBlockStyle}"/>
+
+                    <RadioButtons x:Name="DatabaseTypeSelector"
+                                  SelectionChanged="DatabaseTypeSelector_SelectionChanged">
+                        <RadioButton x:Name="RadioLocalDB" Content="Usar LocalDB (Recomendado para 1 PC)" IsChecked="True">
+                            <RadioButton.Tag>
+                                <TextBlock Text="Ideal para uso en una sola computadora. No requiere configuracion adicional."
+                                           TextWrapping="Wrap"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           FontSize="12"
+                                           Margin="0,4,0,0"/>
+                            </RadioButton.Tag>
+                        </RadioButton>
+                        <RadioButton x:Name="RadioSqlServer" Content="Conectar a SQL Server">
+                            <RadioButton.Tag>
+                                <TextBlock Text="Para usar en multiples computadoras conectadas a un servidor central."
+                                           TextWrapping="Wrap"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           FontSize="12"
+                                           Margin="0,4,0,0"/>
+                            </RadioButton.Tag>
+                        </RadioButton>
+                    </RadioButtons>
+                </StackPanel>
+
+                <!-- LocalDB Info Panel -->
+                <InfoBar x:Name="LocalDBInfoBar"
+                         Title="LocalDB"
+                         Message="Se usara la instancia local: (localdb)\MSSQLLocalDB con la base de datos eda_db"
+                         Severity="Informational"
+                         IsOpen="True"
+                         IsClosable="False"/>
+
+                <!-- SQL Server Configuration Panel -->
+                <StackPanel x:Name="SqlServerPanel"
+                            Spacing="16"
+                            Visibility="Collapsed">
+
+                    <TextBox x:Name="TxtServer"
+                             Header="Servidor *"
+                             PlaceholderText="Ej: 192.168.1.100 o .\SQLEXPRESS"/>
+
+                    <TextBox x:Name="TxtDatabase"
+                             Header="Base de datos"
+                             Text="eda_db"
+                             PlaceholderText="eda_db"/>
+
+                    <!-- Authentication Type -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Tipo de autenticacion"
+                                   Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                        <RadioButtons x:Name="AuthTypeSelector"
+                                      SelectionChanged="AuthTypeSelector_SelectionChanged">
+                            <RadioButton x:Name="RadioWindowsAuth"
+                                         Content="Autenticacion de Windows"
+                                         IsChecked="True"/>
+                            <RadioButton x:Name="RadioSqlAuth"
+                                         Content="Autenticacion de SQL Server"/>
+                        </RadioButtons>
+                    </StackPanel>
+
+                    <!-- SQL Server Credentials -->
+                    <StackPanel x:Name="SqlCredentialsPanel"
+                                Spacing="12"
+                                Visibility="Collapsed">
+                        <TextBox x:Name="TxtUsername"
+                                 Header="Usuario *"
+                                 PlaceholderText="sa"/>
+                        <PasswordBox x:Name="TxtPassword"
+                                     Header="Contrasena *"
+                                     PlaceholderText="Ingrese la contrasena"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Test Connection Button -->
+                <Button x:Name="BtnTestConnection"
+                        Content="Probar conexion"
+                        Click="BtnTestConnection_Click"
+                        HorizontalAlignment="Stretch"
+                        Style="{StaticResource AccentButtonStyle}"/>
+
+                <!-- Connection Status -->
+                <InfoBar x:Name="ConnectionStatusBar"
+                         IsOpen="False"
+                         IsClosable="True"/>
+
+                <!-- Continue Button -->
+                <Button x:Name="BtnContinue"
+                        Content="Guardar y continuar"
+                        Click="BtnContinue_Click"
+                        HorizontalAlignment="Stretch"
+                        IsEnabled="False"
+                        Margin="0,16,0,0"/>
+
+                <!-- Progress Ring -->
+                <ProgressRing x:Name="LoadingRing"
+                              IsActive="False"
+                              Width="40"
+                              Height="40"/>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

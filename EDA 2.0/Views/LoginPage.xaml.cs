@@ -1,9 +1,8 @@
 using EDA.APPLICATION.Features.ShiftFeature.Commands.CreateShiftCommand;
+using EDA.APPLICATION.Features.ShiftFeature.Queries;
 using EDA.APPLICATION.Features.UserFeature.Commands.LoginCommand;
 using EDA.DOMAIN.Entities;
-using EDA.INFRAESTRUCTURE;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -17,13 +16,11 @@ namespace EDA_2._0.Views
     public sealed partial class LoginPage : Page
     {
         private readonly IMediator _mediator;
-        private readonly DatabaseContext _dbContext;
 
         public LoginPage()
         {
             InitializeComponent();
             _mediator = App.Services.GetRequiredService<IMediator>();
-            _dbContext = App.Services.GetRequiredService<DatabaseContext>();
         }
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
@@ -67,12 +64,11 @@ namespace EDA_2._0.Views
                     else
                     {
                         // Verificar si tiene turno abierto
-                        var openShift = await _dbContext.Shifts
-                            .FirstOrDefaultAsync(s => s.UserId == result.Data.Id && s.IsOpen);
+                        var shiftResult = await _mediator.Send(new GetOpenShiftByUserIdQuery { UserId = result.Data.Id });
 
-                        if (openShift != null)
+                        if (shiftResult.Succeeded && shiftResult.Data != null)
                         {
-                            App.CurrentShift = openShift;
+                            App.CurrentShift = shiftResult.Data;
                             App.MainWindow.NavigateToPage(typeof(MainMenuPage));
                         }
                         else

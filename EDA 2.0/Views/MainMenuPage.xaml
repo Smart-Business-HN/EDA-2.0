@@ -10,7 +10,26 @@
     Background="Transparent">
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Update InfoBar -->
+        <InfoBar x:Name="UpdateInfoBar"
+                 Grid.Row="0"
+                 Title="Actualizacion disponible"
+                 Message="Hay una nueva version disponible."
+                 Severity="Informational"
+                 IsOpen="False"
+                 IsClosable="True">
+            <InfoBar.ActionButton>
+                <HyperlinkButton Content="Descargar" Click="UpdateDownload_Click"/>
+            </InfoBar.ActionButton>
+        </InfoBar>
+
         <NavigationView x:Name="NavView"
+                        Grid.Row="1"
                         PaneDisplayMode="Left"
                         IsBackButtonVisible="Collapsed"
                         IsSettingsVisible="False"
@@ -81,6 +100,55 @@
                 <NavigationViewItem x:Name="NavResumenVentas" Content="Resumen de Ventas" Tag="resumenes">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE9D2;"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <!-- Reportes (Acordeon) -->
+                <NavigationViewItem x:Name="NavReportes" Content="Reportes" Tag="reportes" SelectsOnInvoked="False">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE9F9;"/>
+                    </NavigationViewItem.Icon>
+                    <NavigationViewItem.MenuItems>
+                        <NavigationViewItem Content="Ventas por Periodo" Tag="report_sales_period">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE787;"/>
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem Content="Metodos de Pago" Tag="report_payment_methods">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE8C7;"/>
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem Content="Resumen de Impuestos" Tag="report_taxes">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE912;"/>
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem Content="Stock Bajo" Tag="report_low_stock">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE7BA;"/>
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem Content="Productos por Vencer" Tag="report_expiring">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE823;"/>
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem Content="Mas Vendidos" Tag="report_top_products">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE735;"/>
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem Content="Inventario" Tag="report_inventory">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE7B8;"/>
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                    </NavigationViewItem.MenuItems>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="NavCierreMes" Content="Cierre de Mes" Tag="cierre_mes">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE8A1;"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 

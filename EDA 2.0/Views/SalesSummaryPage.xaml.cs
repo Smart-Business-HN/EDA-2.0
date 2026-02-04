@@ -1,6 +1,8 @@
+using EDA.APPLICATION.DTOs;
+using EDA.APPLICATION.Features.SalesSummaryFeature.Queries;
+using EDA.APPLICATION.Features.UserFeature.Queries;
 using EDA.DOMAIN.Entities;
-using EDA.INFRAESTRUCTURE;
-using Microsoft.EntityFrameworkCore;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -13,12 +15,13 @@ namespace EDA_2._0.Views
 {
     public sealed partial class SalesSummaryPage : Page
     {
-        private readonly DatabaseContext _dbContext;
+        private readonly IMediator _mediator;
+        private List<User> _users = new();
 
         public SalesSummaryPage()
         {
             InitializeComponent();
-            _dbContext = App.Services.GetRequiredService<DatabaseContext>();
+            _mediator = App.Services.GetRequiredService<IMediator>();
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
@@ -28,11 +31,16 @@ namespace EDA_2._0.Views
             FromDatePicker.Date = new DateTimeOffset(new DateTime(today.Year, today.Month, 1));
             ToDatePicker.Date = new DateTimeOffset(today);
 
-            // Cargar usuarios
-            var users = await _dbContext.Users.OrderBy(u => u.Name).ToListAsync();
+            // Cargar usuarios via Query
+            var usersResult = await _mediator.Send(new GetAllUsersQuery { PageSize = 1000 });
+            if (usersResult.Succeeded && usersResult.Data != null)
+            {
+                _users = usersResult.Data.Items;
+            }
+
             UserFilterComboBox.Items.Clear();
             UserFilterComboBox.Items.Add(new User { Id = 0, Name = "Todos" });
-            foreach (var u in users)
+            foreach (var u in _users)
                 UserFilterComboBox.Items.Add(u);
             UserFilterComboBox.SelectedIndex = 0;
 
@@ -57,73 +65,59 @@ namespace EDA_2._0.Views
                 if (UserFilterComboBox.SelectedItem is User selectedUser && selectedUser.Id > 0)
                     filterUserId = selectedUser.Id;
 
-                // Consultar turnos en rango
-                var shiftsQuery = _dbContext.Shifts
-                    .Include(s => s.User)
-                    .Where(s => s.StartTime >= fromDate && s.StartTime < toDate);
-
-                if (filterUserId.HasValue)
-                    shiftsQuery = shiftsQuery.Where(s => s.UserId == filterUserId.Value);
-
-                var shifts = await shiftsQuery.OrderByDescending(s => s.StartTime).ToListAsync();
-
-                // Consultar facturas en rango
-                var invoicesQuery = _dbContext.Invoices
-                    .Where(i => i.Date >= fromDate && i.Date < toDate);
-
-                if (filterUserId.HasValue)
-                    invoicesQuery = invoicesQuery.Where(i => i.UserId == filterUserId.Value);
-
-                var invoices = await invoicesQuery.ToListAsync();
-
-                // Detalle por turno
-                var shiftDetails = new List<ShiftDetailItem>();
-                foreach (var shift in shifts)
+                // Usar GetSalesSummaryQuery
+                var result = await _mediator.Send(new GetSalesSummaryQuery
                 {
-                    var endTime = shift.EndTime ?? DateTime.Now;
-                    var shiftInvoices = invoices
-                        .Where(i => i.UserId == shift.UserId && i.Date >= shift.StartTime && i.Date <= endTime)
-                        .ToList();
+                    FromDate = fromDate,
+                    ToDate = toDate,
+                    UserId = filterUserId
+                });
 
-                    shiftDetails.Add(new ShiftDetailItem
+                if (result.Succeeded && result.Data != null)
+                {
+                    var data = result.Data;
+
+                    // Actualizar UI
+                    TotalShiftsText.Text = data.GrandTotalShifts.ToString();
+                    TotalInvoicesText.Text = data.GrandTotalInvoices.ToString();
+                    TotalSalesText.Text = $"L {data.GrandTotalSales:N2}";
+
+                    // Convertir a DTOs locales para formateo
+                    var userSummary = data.UserSummaries.Select(u => new UserSummaryItem
                     {
-                        UserName = shift.User?.Name ?? "—",
-                        ShiftType = shift.ShiftType,
-                        StartTime = shift.StartTime,
-                        EndTime = shift.EndTime,
-                        InitialAmount = shift.InitialAmount,
-                        FinalAmount = shift.FinalAmount,
-                        Difference = shift.Difference,
-                        InvoiceCount = shiftInvoices.Count,
-                        TotalSales = shiftInvoices.Sum(i => i.Total)
-                    });
+                        UserName = u.UserName,
+                        TotalShifts = u.TotalShifts,
+                        TotalInvoices = u.TotalInvoices,
+                        TotalSales = u.TotalSales
+                    }).ToList();
+
+                    var shiftDetails = data.ShiftDetails.Select(s => new ShiftDetailItem
+                    {
+                        UserName = s.UserName,
+                        ShiftType = s.ShiftType,
+                        StartTime = s.StartTime,
+                        EndTime = s.EndTime,
+                        InitialAmount = s.InitialAmount,
+                        FinalAmount = s.FinalAmount,
+                        Difference = s.Difference,
+                        InvoiceCount = s.InvoiceCount,
+                        TotalSales = s.TotalSales
+                    }).ToList();
+
+                    UserSummaryListView.ItemsSource = userSummary;
+                    ShiftDetailListView.ItemsSource = shiftDetails;
                 }
-
-                // Resumen por usuario
-                var userSummary = shiftDetails
-                    .GroupBy(s => s.UserName)
-                    .Select(g => new UserSummaryItem
+                else
+                {
+                    var dialog = new ContentDialog
                     {
-                        UserName = g.Key,
-                        TotalShifts = g.Count(),
-                        TotalInvoices = g.Sum(s => s.InvoiceCount),
-                        TotalSales = g.Sum(s => s.TotalSales)
-                    })
-                    .OrderByDescending(u => u.TotalSales)
-                    .ToList();
-
-                // Totales globales
-                var grandTotalShifts = shifts.Count;
-                var grandTotalInvoices = shiftDetails.Sum(s => s.InvoiceCount);
-                var grandTotalSales = shiftDetails.Sum(s => s.TotalSales);
-
-                // Actualizar UI
-                TotalShiftsText.Text = grandTotalShifts.ToString();
-                TotalInvoicesText.Text = grandTotalInvoices.ToString();
-                TotalSalesText.Text = $"L {grandTotalSales:N2}";
-
-                UserSummaryListView.ItemsSource = userSummary;
-                ShiftDetailListView.ItemsSource = shiftDetails;
+                        Title = "Error",
+                        Content = result.Message ?? "Error al cargar datos",
+                        CloseButtonText = "Aceptar",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await dialog.ShowAsync();
+                }
             }
             catch (Exception ex)
             {
@@ -143,7 +137,7 @@ namespace EDA_2._0.Views
         }
     }
 
-    // DTOs internos
+    // DTOs internos para formateo en UI
     public class UserSummaryItem
     {
         public string UserName { get; set; } = null!;

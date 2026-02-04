@@ -12,20 +12,30 @@ namespace EDA.INFRAESTRUCTURE
     {
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
-            var connectionString = configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+            // Servicio de configuracion de base de datos (siempre disponible)
+            services.AddSingleton<IDatabaseConfigService, DatabaseConfigService>();
 
-            services.AddDbContext<DatabaseContext>(options =>
-                options.UseSqlServer(connectionString));
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-            services.AddScoped(typeof(IRepositoryAsync<>), typeof(CustomRepositoryAsync<>));
+            // Solo registrar DbContext si hay una conexion configurada
+            if (!string.IsNullOrWhiteSpace(connectionString))
+            {
+                services.AddDbContext<DatabaseContext>(options =>
+                    options.UseSqlServer(connectionString));
 
-            // Servicios de PDF
+                services.AddScoped(typeof(IRepositoryAsync<>), typeof(CustomRepositoryAsync<>));
+
+                // Servicios de Dashboard
+                services.AddScoped<IDashboardService, DashboardService>();
+            }
+
+            // Servicios de PDF (siempre disponibles)
             services.AddTransient<IInvoicePdfService, InvoicePdfService>();
             services.AddTransient<IShiftReportPdfService, ShiftReportPdfService>();
+            services.AddTransient<IReportPdfService, ReportPdfService>();
 
-            // Servicios de Dashboard
-            services.AddScoped<IDashboardService, DashboardService>();
+            // Servicio de actualizaciones
+            services.AddSingleton<IUpdateCheckerService, UpdateCheckerService>();
 
             return services;
         }

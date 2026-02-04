@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="EDA_2._0.Views.Reports.PaymentMethodsReportPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Transparent"
+    Loaded="Page_Loaded">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock Text="Metodos de Pago" FontSize="28" FontWeight="SemiBold"/>
+            <TextBlock Text="Desglose de ventas por tipo de pago"
+                       FontSize="14"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Filters -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
+            <DatePicker x:Name="FromDatePicker" Header="Desde"/>
+            <DatePicker x:Name="ToDatePicker" Header="Hasta"/>
+            <Button Content="Buscar"
+                    Style="{StaticResource AccentButtonStyle}"
+                    Click="SearchButton_Click"
+                    VerticalAlignment="Bottom"/>
+            <ProgressRing x:Name="LoadingRing" IsActive="False" Width="24" Height="24" VerticalAlignment="Bottom"/>
+        </StackPanel>
+
+        <!-- Summary Cards -->
+        <Grid Grid.Row="2" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8" Padding="16" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="Total Transacciones" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="TotalTransactionsText" Text="0" FontSize="28" FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8" Padding="16" Margin="8,0,0,0">
+                <StackPanel>
+                    <TextBlock Text="Total Recaudado" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="TotalAmountText" Text="L 0.00" FontSize="28" FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Data Grid -->
+        <ListView Grid.Row="3" x:Name="DataListView" SelectionMode="None">
+            <ListView.Header>
+                <Grid Padding="12,8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="100"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Metodo de Pago" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Text="Transacciones" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Column="2" Text="Monto Total" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Column="3" Text="Porcentaje" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                </Grid>
+            </ListView.Header>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="12,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding PaymentTypeName}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="{Binding TransactionCount}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="2" Text="{Binding TotalAmountFormatted}" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Column="3" Text="{Binding PercentageFormatted}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0" Spacing="8">
+            <Button x:Name="PrintPdfButton"
+                    Content="Imprimir PDF"
+                    Click="PrintPdf_Click"
+                    IsEnabled="False"/>
+        </StackPanel>
+    </Grid>
+</Page>

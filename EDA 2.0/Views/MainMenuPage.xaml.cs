@@ -1,10 +1,11 @@
 using EDA.APPLICATION.DTOs;
+using EDA.APPLICATION.Features.CompanyFeature.Queries;
 using EDA.APPLICATION.Features.ShiftFeature.Commands.UpdateShiftCommand;
+using EDA.APPLICATION.Features.ShiftFeature.Queries;
 using EDA.APPLICATION.Interfaces;
 using EDA.DOMAIN.Enums;
-using EDA.INFRAESTRUCTURE;
+using EDA_2._0.Views.Reports;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -18,10 +19,50 @@ namespace EDA_2._0.Views
 {
     public sealed partial class MainMenuPage : Page
     {
+        private readonly IMediator _mediator;
+        private readonly IUpdateCheckerService _updateChecker;
+        private UpdateCheckResult? _updateResult;
+
         public MainMenuPage()
         {
             InitializeComponent();
+            _mediator = App.Services.GetRequiredService<IMediator>();
+            _updateChecker = App.Services.GetRequiredService<IUpdateCheckerService>();
             ConfigureMenuByRole();
+            CheckForUpdatesAsync();
+        }
+
+        private async void CheckForUpdatesAsync()
+        {
+            try
+            {
+                _updateResult = await _updateChecker.CheckForUpdatesAsync();
+                if (_updateResult.UpdateAvailable)
+                {
+                    UpdateInfoBar.Title = "Actualizacion disponible";
+                    UpdateInfoBar.Message = $"Version {_updateResult.LatestVersion} disponible. Version actual: {_updateResult.CurrentVersion}";
+                    UpdateInfoBar.IsOpen = true;
+                }
+            }
+            catch
+            {
+                // Silently ignore update check failures
+            }
+        }
+
+        private void UpdateDownload_Click(object sender, RoutedEventArgs e)
+        {
+            if (_updateResult == null) return;
+
+            // Prefer Store URL if available, otherwise use download URL
+            var url = !string.IsNullOrEmpty(_updateResult.StoreUrl)
+                ? _updateResult.StoreUrl
+                : _updateResult.DownloadUrl;
+
+            if (!string.IsNullOrEmpty(url))
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
         }
 
         private void ConfigureMenuByRole()
@@ -43,6 +84,8 @@ namespace EDA_2._0.Views
                 NavTiposPago.Visibility = Visibility.Collapsed;
                 NavTurnos.Visibility = Visibility.Collapsed;
                 NavResumenVentas.Visibility = Visibility.Collapsed;
+                NavReportes.Visibility = Visibility.Collapsed;
+                NavCierreMes.Visibility = Visibility.Collapsed;
                 NavCAIs.Visibility = Visibility.Collapsed;
                 NavUsuarios.Visibility = Visibility.Collapsed;
                 NavEmpresa.Visibility = Visibility.Collapsed;
@@ -101,6 +144,30 @@ namespace EDA_2._0.Views
                     case "resumenes":
                         ContentFrame.Navigate(typeof(SalesSummaryPage));
                         break;
+                    case "report_sales_period":
+                        ContentFrame.Navigate(typeof(SalesByPeriodReportPage));
+                        break;
+                    case "report_payment_methods":
+                        ContentFrame.Navigate(typeof(PaymentMethodsReportPage));
+                        break;
+                    case "report_taxes":
+                        ContentFrame.Navigate(typeof(TaxSummaryReportPage));
+                        break;
+                    case "report_low_stock":
+                        ContentFrame.Navigate(typeof(LowStockReportPage));
+                        break;
+                    case "report_expiring":
+                        ContentFrame.Navigate(typeof(ExpiringProductsReportPage));
+                        break;
+                    case "report_top_products":
+                        ContentFrame.Navigate(typeof(TopProductsReportPage));
+                        break;
+                    case "report_inventory":
+                        ContentFrame.Navigate(typeof(InventoryReportPage));
+                        break;
+                    case "cierre_mes":
+                        ContentFrame.Navigate(typeof(MonthlyClosingReportPage));
+                        break;
                 }
             }
         }
@@ -148,31 +215,32 @@ namespace EDA_2._0.Views
 
             var shift = App.CurrentShift;
 
-            // Consultar pagos del turno para mostrar info
-            var dbContext = App.Services.GetRequiredService<DatabaseContext>();
-            var invoiceIds = await dbContext.Invoices
-                .Where(i => i.UserId == shift.UserId && i.Date >= shift.StartTime)
-                .Select(i => i.Id)
-                .ToListAsync();
+            // Obtener datos de cierre del turno via Query
+            var closingResult = await _mediator.Send(new GetShiftClosingDataQuery
+            {
+                UserId = shift.UserId,
+                ShiftStartTime = shift.StartTime,
+                InitialAmount = shift.InitialAmount
+            });
 
-            var payments = await dbContext.InvoicePayments
-                .Where(p => invoiceIds.Contains(p.InvoiceId))
-                .Include(p => p.PaymentType)
-                .ToListAsync();
+            if (!closingResult.Succeeded || closingResult.Data == null)
+            {
+                var errDialog = new ContentDialog
+                {
+                    Title = "Error",
+                    Content = "Error al obtener datos del turno.",
+                    CloseButtonText = "Aceptar",
+                    XamlRoot = this.XamlRoot
+                };
+                await errDialog.ShowAsync();
+                return;
+            }
 
-            // Efectivo = PaymentTypeId 1, Tarjeta = PaymentTypeId 3, Transferencia = 2
-            var expectedCash = payments.Where(p => p.PaymentTypeId == 1).Sum(p => p.Amount);
-            var expectedCard = payments.Where(p => p.PaymentTypeId == 3 || p.PaymentTypeId == 2).Sum(p => p.Amount);
-            var expectedTotal = shift.InitialAmount + expectedCash + expectedCard;
-
-            var totalInvoices = invoiceIds.Count;
-            var totalSales = await dbContext.Invoices
-                .Where(i => invoiceIds.Contains(i.Id))
-                .SumAsync(i => i.Total);
+            var closingData = closingResult.Data;
 
             var infoText = new TextBlock
             {
-                Text = $"Turno: {shift.ShiftType}\nInicio: {shift.StartTime:dd/MM/yyyy HH:mm}\nSaldo inicial: L {shift.InitialAmount:N2}\n\nVentas en efectivo: L {expectedCash:N2}\nVentas en tarjeta: L {expectedCard:N2}\nSaldo esperado: L {expectedTotal:N2}",
+                Text = $"Turno: {shift.ShiftType}\nInicio: {shift.StartTime:dd/MM/yyyy HH:mm}\nSaldo inicial: L {shift.InitialAmount:N2}\n\nVentas en efectivo: L {closingData.ExpectedCash:N2}\nVentas en tarjeta: L {closingData.ExpectedCard:N2}\nSaldo esperado: L {closingData.ExpectedTotal:N2}",
                 Margin = new Thickness(0, 0, 0, 12)
             };
 
@@ -217,26 +285,26 @@ namespace EDA_2._0.Views
             {
                 try
                 {
-                    var mediator = App.Services.GetRequiredService<IMediator>();
                     decimal finalCash = double.IsNaN(cashBox.Value) ? 0 : (decimal)cashBox.Value;
                     decimal finalCard = double.IsNaN(cardBox.Value) ? 0 : (decimal)cardBox.Value;
                     decimal finalAmount = finalCash + finalCard + shift.InitialAmount;
-                    decimal difference = expectedTotal - finalAmount;
+                    decimal difference = closingData.ExpectedTotal - finalAmount;
 
                     var command = new UpdateShiftCommand
                     {
                         Id = shift.Id,
                         FinalCashAmount = finalCash,
                         FinalCardAmount = finalCard,
-                        ExpectedAmount = expectedTotal
+                        ExpectedAmount = closingData.ExpectedTotal
                     };
 
-                    var updateResult = await mediator.Send(command);
+                    var updateResult = await _mediator.Send(command);
 
                     if (updateResult.Succeeded)
                     {
                         // Obtener datos de empresa
-                        var company = await dbContext.Companies.FirstOrDefaultAsync();
+                        var companyResult = await _mediator.Send(new GetCompanyQuery());
+                        var company = companyResult.Data;
 
                         // Generar PDF
                         var pdfService = App.Services.GetRequiredService<IShiftReportPdfService>();
@@ -250,12 +318,12 @@ namespace EDA_2._0.Views
                             FinalCashAmount = finalCash,
                             FinalCardAmount = finalCard,
                             FinalAmount = finalAmount,
-                            ExpectedCash = expectedCash,
-                            ExpectedCard = expectedCard,
-                            ExpectedAmount = expectedTotal,
+                            ExpectedCash = closingData.ExpectedCash,
+                            ExpectedCard = closingData.ExpectedCard,
+                            ExpectedAmount = closingData.ExpectedTotal,
                             Difference = difference,
-                            TotalInvoices = totalInvoices,
-                            TotalSales = totalSales,
+                            TotalInvoices = closingData.TotalInvoices,
+                            TotalSales = closingData.TotalSales,
                             CompanyName = company?.Name ?? "Empresa",
                             CompanyAddress = company?.Address1,
                             CompanyRTN = company?.RTN
@@ -271,7 +339,7 @@ namespace EDA_2._0.Views
                         var successDialog = new ContentDialog
                         {
                             Title = "Turno Cerrado",
-                            Content = $"Turno cerrado exitosamente.\nSaldo esperado: L {expectedTotal:N2}\nSaldo reportado: L {finalAmount:N2}\nDiferencia: L {difference:N2}\nFacturas: {totalInvoices}\nTotal Ventas: L {totalSales:N2}",
+                            Content = $"Turno cerrado exitosamente.\nSaldo esperado: L {closingData.ExpectedTotal:N2}\nSaldo reportado: L {finalAmount:N2}\nDiferencia: L {difference:N2}\nFacturas: {closingData.TotalInvoices}\nTotal Ventas: L {closingData.TotalSales:N2}",
                             CloseButtonText = "Aceptar",
                             XamlRoot = this.XamlRoot
                         };

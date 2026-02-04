@@ -1,0 +1,39 @@
+EDA 2.0 - Sistema de Facturacion
+Copyright (c) 2024 Tu Empresa
+
+CONTRATO DE LICENCIA DE USUARIO FINAL (EULA)
+
+Este Contrato de Licencia de Usuario Final ("Acuerdo") es un acuerdo legal entre
+usted (ya sea una persona fisica o juridica) y Tu Empresa ("Licenciante") para
+el uso del software EDA 2.0 ("Software").
+
+AL INSTALAR, COPIAR O UTILIZAR DE CUALQUIER MANERA EL SOFTWARE, USTED ACEPTA
+ESTAR OBLIGADO POR LOS TERMINOS DE ESTE ACUERDO.
+
+1. CONCESION DE LICENCIA
+El Licenciante le otorga una licencia no exclusiva e intransferible para instalar
+y utilizar el Software en un numero limitado de computadoras segun lo especificado
+en su compra.
+
+2. RESTRICCIONES
+Usted no podra:
+- Copiar, modificar o distribuir el Software
+- Realizar ingenieria inversa, descompilar o desensamblar el Software
+- Alquilar, arrendar o prestar el Software
+- Utilizar el Software para propositos ilegales
+
+3. PROPIEDAD INTELECTUAL
+El Software es propiedad del Licenciante y esta protegido por las leyes de
+derechos de autor y tratados internacionales.
+
+4. LIMITACION DE RESPONSABILIDAD
+EN NINGUN CASO EL LICENCIANTE SERA RESPONSABLE POR DANOS ESPECIALES,
+INCIDENTALES, INDIRECTOS O CONSECUENTES.
+
+5. TERMINACION
+Este Acuerdo es efectivo hasta que sea terminado. Sus derechos bajo este
+Acuerdo terminaran automaticamente sin previo aviso si usted no cumple
+con cualquier termino de este Acuerdo.
+
+Si tiene alguna pregunta sobre este Acuerdo, contactenos en:
+soporte@tuempresa.com

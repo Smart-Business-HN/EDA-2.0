@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="EDA_2._0.Views.Reports.MonthlyClosingReportPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="Transparent"
+    Loaded="Page_Loaded">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock Text="Cierre de Mes" FontSize="28" FontWeight="SemiBold"/>
+            <TextBlock Text="Resumen mensual de ventas e impuestos para declaracion fiscal"
+                       FontSize="14"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Month/Year Selection -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
+            <ComboBox x:Name="MonthComboBox"
+                      Header="Mes"
+                      MinWidth="150"
+                      SelectedIndex="0">
+                <ComboBoxItem Content="Enero" Tag="1"/>
+                <ComboBoxItem Content="Febrero" Tag="2"/>
+                <ComboBoxItem Content="Marzo" Tag="3"/>
+                <ComboBoxItem Content="Abril" Tag="4"/>
+                <ComboBoxItem Content="Mayo" Tag="5"/>
+                <ComboBoxItem Content="Junio" Tag="6"/>
+                <ComboBoxItem Content="Julio" Tag="7"/>
+                <ComboBoxItem Content="Agosto" Tag="8"/>
+                <ComboBoxItem Content="Septiembre" Tag="9"/>
+                <ComboBoxItem Content="Octubre" Tag="10"/>
+                <ComboBoxItem Content="Noviembre" Tag="11"/>
+                <ComboBoxItem Content="Diciembre" Tag="12"/>
+            </ComboBox>
+            <NumberBox x:Name="YearNumberBox"
+                       Header="Año"
+                       Minimum="2020"
+                       Maximum="2100"
+                       SpinButtonPlacementMode="Compact"
+                       MinWidth="120"/>
+            <Button Content="Generar Cierre"
+                    Style="{StaticResource AccentButtonStyle}"
+                    Click="GenerateButton_Click"
+                    VerticalAlignment="Bottom"/>
+            <ProgressRing x:Name="LoadingRing" IsActive="False" Width="24" Height="24" VerticalAlignment="Bottom"/>
+        </StackPanel>
+
+        <!-- Summary Cards -->
+        <Grid Grid.Row="2" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8" Padding="16" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="Total Facturas" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="TotalInvoicesText" Text="0" FontSize="24" FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8" Padding="16" Margin="8,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="Total Ventas" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="TotalSalesText" Text="L 0.00" FontSize="24" FontWeight="Bold" Foreground="Green"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8" Padding="16" Margin="8,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="Total Impuestos" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="TotalTaxesText" Text="L 0.00" FontSize="24" FontWeight="Bold"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="3" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8" Padding="16" Margin="8,0,0,0">
+                <StackPanel>
+                    <TextBlock Text="Total Descuentos" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock x:Name="TotalDiscountsText" Text="L 0.00" FontSize="24" FontWeight="Bold" Foreground="Orange"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Tax Breakdown -->
+        <ScrollViewer Grid.Row="3">
+            <StackPanel Spacing="16">
+                <!-- Tax Details Card -->
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        CornerRadius="8" Padding="20">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Desglose de Impuestos" FontSize="16" FontWeight="SemiBold"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="150"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Header -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Categoria" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Base Gravable" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Impuesto" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="0,0,0,8"/>
+
+                            <!-- ISV 15% -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Gravado al 15%" Margin="0,8,0,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TaxedAt15Text" Text="L 0.00" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="2" x:Name="TaxesAt15Text" Text="L 0.00" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+
+                            <!-- ISV 18% -->
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Gravado al 18%" Margin="0,8,0,0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TaxedAt18Text" Text="L 0.00" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="2" x:Name="TaxesAt18Text" Text="L 0.00" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+
+                            <!-- Exento -->
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Exento" Margin="0,8,0,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="ExemptText" Text="L 0.00" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="2" Text="L 0.00" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+
+                            <!-- Separator -->
+                            <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3"
+                                    BorderThickness="0,1,0,0"
+                                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                    Margin="0,12,0,0"/>
+                        </Grid>
+
+                        <!-- Total -->
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="150"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="TOTAL" FontWeight="Bold" FontSize="14"/>
+                            <TextBlock Grid.Column="1" x:Name="TotalTaxedText" Text="L 0.00" FontWeight="Bold" HorizontalAlignment="Right" FontSize="14"/>
+                            <TextBlock Grid.Column="2" x:Name="GrandTotalTaxesText" Text="L 0.00" FontWeight="Bold" HorizontalAlignment="Right" FontSize="14"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Period Info Card -->
+                <Border x:Name="PeriodInfoCard" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                        CornerRadius="8" Padding="20" Visibility="Collapsed">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Informacion del Periodo" FontSize="16" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="PeriodText" Text="" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <TextBlock x:Name="GeneratedAtText" Text="" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0" Spacing="8">
+            <Button x:Name="PrintPdfButton"
+                    Content="Imprimir PDF"
+                    Click="PrintPdf_Click"
+                    IsEnabled="False"/>
+        </StackPanel>
+    </Grid>
+</Page>

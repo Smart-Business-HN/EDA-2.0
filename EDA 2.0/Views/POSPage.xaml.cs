@@ -1,17 +1,21 @@
 using EDA.APPLICATION.DTOs;
+using EDA.APPLICATION.Features.CaiFeature.Queries;
+using EDA.APPLICATION.Features.CompanyFeature.Queries;
 using EDA.APPLICATION.Features.CustomerFeature.Commands.CreateCustomerCommand;
 using EDA.APPLICATION.Features.CustomerFeature.Queries;
 using EDA.APPLICATION.Features.DiscountFeature.Queries;
 using EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand;
 using EDA.APPLICATION.Features.PaymentTypeFeature.Queries;
+using EDA.APPLICATION.Features.PendingSaleFeature.Commands.CreatePendingSaleCommand;
+using EDA.APPLICATION.Features.PendingSaleFeature.Commands.DeletePendingSaleCommand;
+using EDA.APPLICATION.Features.PendingSaleFeature.Commands.UpdatePendingSaleCommand;
+using EDA.APPLICATION.Features.PendingSaleFeature.Queries;
 using EDA.APPLICATION.Features.ProductFeature.Commands.CreateProductCommand;
 using EDA.APPLICATION.Features.ProductFeature.Queries;
 using EDA.APPLICATION.Features.FamilyFeature.Queries;
 using EDA.APPLICATION.Features.TaxFeature.Queries;
 using EDA.APPLICATION.Interfaces;
-using EDA.APPLICATION.Specifications.CaiSpecification;
 using EDA.DOMAIN.Entities;
-using Ardalis.Specification.EntityFrameworkCore;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -25,8 +29,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using EDA.INFRAESTRUCTURE;
-using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
 namespace EDA_2._0.Views
@@ -117,7 +119,6 @@ namespace EDA_2._0.Views
     public sealed partial class POSPage : Page
     {
         private readonly IMediator _mediator;
-        private readonly DatabaseContext _dbContext;
 
         private List<Product> _allProducts = new();
         private List<Customer> _customers = new();
@@ -141,7 +142,6 @@ namespace EDA_2._0.Views
         {
             InitializeComponent();
             _mediator = App.Services.GetRequiredService<IMediator>();
-            _dbContext = App.Services.GetRequiredService<DatabaseContext>();
 
             CartListView.ItemsSource = _cartItems;
             PaymentsListView.ItemsSource = _paymentItems;
@@ -229,15 +229,16 @@ namespace EDA_2._0.Views
         {
             try
             {
-                var spec = new GetActiveCaiSpecification();
-                _activeCai = await _dbContext.Cais.WithSpecification(spec).FirstOrDefaultAsync();
+                var result = await _mediator.Send(new GetActiveCaiQuery());
 
-                if (_activeCai != null)
+                if (result.Succeeded && result.Data != null)
                 {
+                    _activeCai = result.Data;
                     CaiInfoText.Text = $"{_activeCai.Name} ({_activeCai.CurrentCorrelative})";
                 }
                 else
                 {
+                    _activeCai = null;
                     CaiInfoText.Text = "Sin CAI activo";
                 }
             }
@@ -1365,30 +1366,28 @@ namespace EDA_2._0.Views
 
                 if (_currentSession.DbId.HasValue)
                 {
-                    var existing = await _dbContext.PendingSales.FindAsync(_currentSession.DbId.Value);
-                    if (existing != null)
+                    var updateCommand = new UpdatePendingSaleCommand
                     {
-                        existing.DisplayName = _currentSession.DisplayName;
-                        existing.JsonData = json;
-                        _dbContext.PendingSales.Update(existing);
-                    }
+                        Id = _currentSession.DbId.Value,
+                        DisplayName = _currentSession.DisplayName,
+                        JsonData = json
+                    };
+                    await _mediator.Send(updateCommand);
                 }
                 else
                 {
-                    var entity = new PendingSale
+                    var createCommand = new CreatePendingSaleCommand
                     {
                         DisplayName = _currentSession.DisplayName,
                         JsonData = json,
-                        UserId = currentUser.Id,
-                        CreatedAt = DateTime.Now
+                        UserId = currentUser.Id
                     };
-                    _dbContext.PendingSales.Add(entity);
-                    await _dbContext.SaveChangesAsync();
-                    _currentSession.DbId = entity.Id;
-                    return;
+                    var result = await _mediator.Send(createCommand);
+                    if (result.Succeeded && result.Data != null)
+                    {
+                        _currentSession.DbId = result.Data.Id;
+                    }
                 }
-
-                await _dbContext.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -1403,12 +1402,11 @@ namespace EDA_2._0.Views
                 var currentUser = App.CurrentUser;
                 if (currentUser == null) return;
 
-                var pendingSales = await _dbContext.PendingSales
-                    .Where(p => p.UserId == currentUser.Id)
-                    .OrderBy(p => p.CreatedAt)
-                    .ToListAsync();
+                var result = await _mediator.Send(new GetPendingSalesByUserIdQuery { UserId = currentUser.Id });
 
-                foreach (var pending in pendingSales)
+                if (!result.Succeeded || result.Data == null) return;
+
+                foreach (var pending in result.Data)
                 {
                     var data = JsonSerializer.Deserialize<PendingSaleData>(pending.JsonData);
                     if (data == null) continue;
@@ -1467,12 +1465,7 @@ namespace EDA_2._0.Views
         {
             try
             {
-                var entity = await _dbContext.PendingSales.FindAsync(id);
-                if (entity != null)
-                {
-                    _dbContext.PendingSales.Remove(entity);
-                    await _dbContext.SaveChangesAsync();
-                }
+                await _mediator.Send(new DeletePendingSaleCommand { Id = id });
             }
             catch (Exception ex)
             {
@@ -1665,27 +1658,30 @@ namespace EDA_2._0.Views
             try
             {
                 // Obtener datos de la empresa
-                var company = await _dbContext.Companies.FirstOrDefaultAsync();
-                if (company == null)
+                var companyResult = await _mediator.Send(new GetCompanyQuery());
+                var company = companyResult.Data ?? new Company
                 {
-                    // Si no hay empresa configurada, usar valores por defecto
-                    company = new Company
-                    {
-                        Name = "Mi Empresa",
-                        Owner = "Propietario"
-                    };
-                }
+                    Name = "Mi Empresa",
+                    Owner = "Propietario"
+                };
 
-                // Cargar los productos vendidos con información del producto
-                var soldProducts = await _dbContext.SoldProducts
-                    .Where(sp => sp.InvoiceId == invoice.Id)
-                    .ToListAsync();
+                // Usar los items del carrito actual en lugar de consultar la DB
+                // Los SoldProducts ya fueron creados por el CreateInvoiceCommand
+                var soldProducts = _cartItems.Select(c => new SoldProduct
+                {
+                    Description = c.Product.Name,
+                    Quantity = c.Quantity,
+                    UnitPrice = c.UnitPrice,
+                    TaxId = c.Product.TaxId,
+                    TotalLine = c.Subtotal
+                }).ToList();
 
-                // Cargar los pagos con información del tipo de pago
-                var invoicePayments = await _dbContext.InvoicePayments
-                    .Include(ip => ip.PaymentType)
-                    .Where(ip => ip.InvoiceId == invoice.Id)
-                    .ToListAsync();
+                // Usar los pagos del carrito actual
+                var invoicePayments = _paymentItems.Select(p => new InvoicePayment
+                {
+                    PaymentType = p.PaymentType,
+                    Amount = p.Amount
+                }).ToList();
 
                 // Construir datos para el PDF
                 var pdfData = new InvoicePdfData
