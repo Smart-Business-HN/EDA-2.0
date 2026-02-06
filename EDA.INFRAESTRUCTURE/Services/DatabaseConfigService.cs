@@ -74,6 +74,76 @@ namespace EDA.INFRAESTRUCTURE.Services
             }
         }
 
+        public async Task<bool> TestServerConnectionAsync(string connectionString)
+        {
+            try
+            {
+                // Modificar el connection string para conectar a master en lugar de la DB especificada
+                var builder = new SqlConnectionStringBuilder(connectionString);
+                var databaseName = builder.InitialCatalog;
+                builder.InitialCatalog = "master";
+
+                using var connection = new SqlConnection(builder.ConnectionString);
+                await connection.OpenAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> EnsureDatabaseExistsAsync(string connectionString)
+        {
+            var builder = new SqlConnectionStringBuilder(connectionString);
+            var databaseName = builder.InitialCatalog;
+
+            if (string.IsNullOrWhiteSpace(databaseName))
+            {
+                return false;
+            }
+
+            // Conectar a master para crear la base de datos
+            builder.InitialCatalog = "master";
+            builder.ConnectTimeout = 30; // Aumentar timeout
+
+            // Reintentar hasta 3 veces (LocalDB puede tardar en iniciarse)
+            for (int attempt = 1; attempt <= 3; attempt++)
+            {
+                try
+                {
+                    using var connection = new SqlConnection(builder.ConnectionString);
+                    await connection.OpenAsync();
+
+                    // Verificar si la base de datos existe
+                    var checkDbQuery = $"SELECT database_id FROM sys.databases WHERE name = @dbName";
+                    using var checkCmd = new SqlCommand(checkDbQuery, connection);
+                    checkCmd.Parameters.AddWithValue("@dbName", databaseName);
+                    var result = await checkCmd.ExecuteScalarAsync();
+
+                    if (result == null)
+                    {
+                        // Crear la base de datos si no existe
+                        var createDbQuery = $"CREATE DATABASE [{databaseName}]";
+                        using var createCmd = new SqlCommand(createDbQuery, connection);
+                        await createCmd.ExecuteNonQueryAsync();
+                    }
+
+                    return true;
+                }
+                catch
+                {
+                    if (attempt < 3)
+                    {
+                        // Esperar antes de reintentar
+                        await Task.Delay(2000);
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public string BuildConnectionString(string server, string database, bool useWindowsAuth, string? username = null, string? password = null)
         {
             var builder = new SqlConnectionStringBuilder

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace EDA_2._0.Views
@@ -17,6 +18,53 @@ namespace EDA_2._0.Views
         {
             InitializeComponent();
             _configService = App.Services.GetRequiredService<IDatabaseConfigService>();
+        }
+
+        private static void StartLocalDB()
+        {
+            try
+            {
+                var sqlLocalDbPath = FindSqlLocalDBPath();
+
+                if (!string.IsNullOrEmpty(sqlLocalDbPath) && File.Exists(sqlLocalDbPath))
+                {
+                    // Crear instancia si no existe
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = sqlLocalDbPath,
+                        Arguments = "create MSSQLLocalDB",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    })?.WaitForExit(10000);
+
+                    // Iniciar instancia
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = sqlLocalDbPath,
+                        Arguments = "start MSSQLLocalDB",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    })?.WaitForExit(10000);
+                }
+            }
+            catch { /* LocalDB might already be running or not installed */ }
+        }
+
+        private static string? FindSqlLocalDBPath()
+        {
+            string[] versions = { "170", "160", "150", "140", "130" };
+            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+
+            foreach (var version in versions)
+            {
+                var path = Path.Combine(programFiles, "Microsoft SQL Server", version, "Tools", "Binn", "SqlLocalDB.exe");
+                if (File.Exists(path))
+                {
+                    return path;
+                }
+            }
+
+            return null;
         }
 
         private void DatabaseTypeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -69,6 +117,39 @@ namespace EDA_2._0.Views
                     return;
                 }
 
+                // Si es LocalDB, iniciarlo primero
+                if (connectionString.Contains("localdb", StringComparison.OrdinalIgnoreCase))
+                {
+                    StartLocalDB();
+                    // Esperar un poco para que LocalDB se inicie completamente
+                    await Task.Delay(2000);
+                }
+
+                // Primero verificar si el servidor está disponible
+                bool serverAvailable = await _configService.TestServerConnectionAsync(connectionString);
+
+                if (!serverAvailable)
+                {
+                    _connectionTested = false;
+                    _testedConnectionString = null;
+                    BtnContinue.IsEnabled = false;
+                    ShowConnectionStatus(false, "No se pudo conectar al servidor. Verifique que el servidor esté iniciado.");
+                    return;
+                }
+
+                // Intentar crear la base de datos si no existe
+                bool dbCreated = await _configService.EnsureDatabaseExistsAsync(connectionString);
+
+                if (!dbCreated)
+                {
+                    _connectionTested = false;
+                    _testedConnectionString = null;
+                    BtnContinue.IsEnabled = false;
+                    ShowConnectionStatus(false, "No se pudo crear la base de datos. Verifique los permisos.");
+                    return;
+                }
+
+                // Verificar conexión final a la base de datos
                 bool success = await _configService.TestConnectionAsync(connectionString);
 
                 if (success)
@@ -76,14 +157,14 @@ namespace EDA_2._0.Views
                     _connectionTested = true;
                     _testedConnectionString = connectionString;
                     BtnContinue.IsEnabled = true;
-                    ShowConnectionStatus(true, "Conexion exitosa. Puede continuar con la configuracion.");
+                    ShowConnectionStatus(true, "Conexion exitosa. Base de datos lista. Puede continuar.");
                 }
                 else
                 {
                     _connectionTested = false;
                     _testedConnectionString = null;
                     BtnContinue.IsEnabled = false;
-                    ShowConnectionStatus(false, "No se pudo conectar a la base de datos. Verifique los datos e intente de nuevo.");
+                    ShowConnectionStatus(false, "No se pudo conectar a la base de datos.");
                 }
             }
             catch (Exception ex)

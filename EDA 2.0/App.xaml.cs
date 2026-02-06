@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace EDA_2._0
 {
@@ -54,21 +55,52 @@ namespace EDA_2._0
             _isDatabaseConfigured = dbConfigService.IsConfigured();
         }
 
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             _mainWindow = new MainWindow();
 
             if (_isDatabaseConfigured)
             {
-                // Aplicar migraciones pendientes automaticamente
-                using (var scope = Services.CreateScope())
+                try
                 {
-                    var dbContext = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-                    dbContext.Database.Migrate();
-                }
+                    var connectionString = Configuration.GetConnectionString("DefaultConnection") ?? "";
 
-                // Mostrar pagina de login
-                _mainWindow.NavigateToPage(typeof(LoginPage));
+                    // Paso 1: Iniciar LocalDB si está configurado
+                    if (connectionString.Contains("localdb", StringComparison.OrdinalIgnoreCase))
+                    {
+                        StartLocalDB();
+                        // Esperar a que LocalDB se inicie completamente (puede tardar la primera vez)
+                        await Task.Delay(3000);
+                    }
+
+                    // Paso 2: Asegurar que la base de datos existe
+                    var dbConfigService = Services.GetRequiredService<IDatabaseConfigService>();
+                    var dbCreated = await dbConfigService.EnsureDatabaseExistsAsync(connectionString);
+
+                    if (!dbCreated)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Could not create database");
+                        _mainWindow.NavigateToPage(typeof(DatabaseSetupPage));
+                        _mainWindow.Activate();
+                        return;
+                    }
+
+                    // Paso 3: Aplicar migraciones pendientes automaticamente
+                    using (var scope = Services.CreateScope())
+                    {
+                        var dbContext = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+                        await dbContext.Database.MigrateAsync();
+                    }
+
+                    // Mostrar pagina de login
+                    _mainWindow.NavigateToPage(typeof(LoginPage));
+                }
+                catch (Exception ex)
+                {
+                    // Si falla la conexión, mostrar wizard de configuración
+                    System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
+                    _mainWindow.NavigateToPage(typeof(DatabaseSetupPage));
+                }
             }
             else
             {
@@ -77,6 +109,55 @@ namespace EDA_2._0
             }
 
             _mainWindow.Activate();
+        }
+
+        private static void StartLocalDB()
+        {
+            try
+            {
+                // Buscar SqlLocalDB.exe en diferentes versiones de SQL Server
+                var sqlLocalDbPath = FindSqlLocalDBPath();
+
+                if (!string.IsNullOrEmpty(sqlLocalDbPath) && File.Exists(sqlLocalDbPath))
+                {
+                    // Crear instancia si no existe
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = sqlLocalDbPath,
+                        Arguments = "create MSSQLLocalDB",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    })?.WaitForExit(10000);
+
+                    // Iniciar instancia
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = sqlLocalDbPath,
+                        Arguments = "start MSSQLLocalDB",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    })?.WaitForExit(10000);
+                }
+            }
+            catch { /* LocalDB might already be running or not installed */ }
+        }
+
+        private static string? FindSqlLocalDBPath()
+        {
+            // Versiones de SQL Server a buscar (de más nueva a más antigua)
+            string[] versions = { "170", "160", "150", "140", "130" };
+            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+
+            foreach (var version in versions)
+            {
+                var path = Path.Combine(programFiles, "Microsoft SQL Server", version, "Tools", "Binn", "SqlLocalDB.exe");
+                if (File.Exists(path))
+                {
+                    return path;
+                }
+            }
+
+            return null;
         }
     }
 }

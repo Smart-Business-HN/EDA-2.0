@@ -138,7 +138,7 @@ namespace EDA_2._0.Views
 
             var nameTextBox = new TextBox
             {
-                Header = "Nombre del CAI *",
+                Header = "Nombre del CAI  *",
                 PlaceholderText = "Ingrese un nombre descriptivo",
                 Text = cai?.Name ?? string.Empty,
                 Margin = new Thickness(0, 0, 0, 12)
