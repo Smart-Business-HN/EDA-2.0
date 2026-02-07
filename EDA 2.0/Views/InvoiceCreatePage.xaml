@@ -71,16 +71,18 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Product Search -->
+                <!-- Add Product Button -->
                 <StackPanel Grid.Row="0" Spacing="8" Margin="0,0,0,16">
                     <TextBlock Text="AGREGAR PRODUCTOS" FontWeight="SemiBold" FontSize="14"/>
-                    <AutoSuggestBox
-                        x:Name="ProductSearchBox"
-                        PlaceholderText="Buscar producto por nombre o codigo de barras..."
-                        QueryIcon="Find"
-                        TextChanged="ProductSearchBox_TextChanged"
-                        SuggestionChosen="ProductSearchBox_SuggestionChosen"
-                        QuerySubmitted="ProductSearchBox_QuerySubmitted"/>
+                    <Button x:Name="AddProductButton"
+                            Click="AddProductButton_Click"
+                            Style="{StaticResource AccentButtonStyle}"
+                            HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE710;" FontSize="14"/>
+                            <TextBlock Text="Agregar Producto"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <!-- Cart Items -->
@@ -141,8 +143,13 @@
                                                 VerticalAlignment="Center"/>
                                     </StackPanel>
 
-                                    <TextBlock Grid.Column="2"
-                                               Text="{Binding UnitPrice, Converter={StaticResource CurrencyConverter}}"
+                                    <NumberBox Grid.Column="2"
+                                               Value="{Binding UnitPrice, Mode=TwoWay}"
+                                               Minimum="0"
+                                               SpinButtonPlacementMode="Compact"
+                                               Tag="{Binding}"
+                                               LostFocus="PriceNumberBox_LostFocus"
+                                               Width="90"
                                                VerticalAlignment="Center"
                                                HorizontalAlignment="Right"/>
 

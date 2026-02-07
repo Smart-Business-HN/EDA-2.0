@@ -41,11 +41,17 @@
                 VerticalAlignment="Center"/>
 
             <StackPanel Grid.Column="1" Margin="16,0,0,0">
-                <TextBlock
-                    x:Name="InvoiceNumberText"
-                    Text="Factura #"
-                    FontSize="28"
-                    FontWeight="SemiBold"/>
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock
+                        x:Name="InvoiceNumberText"
+                        Text="Factura #"
+                        FontSize="28"
+                        FontWeight="SemiBold"
+                        VerticalAlignment="Center"/>
+                    <Border x:Name="StatusBadge" CornerRadius="4" Padding="8,4" VerticalAlignment="Center">
+                        <TextBlock x:Name="StatusText" Text="Estado" FontSize="12" FontWeight="SemiBold"/>
+                    </Border>
+                </StackPanel>
                 <TextBlock
                     x:Name="InvoiceDateText"
                     Text="Fecha: "
@@ -315,6 +321,31 @@
 
         <!-- Action Buttons -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" Margin="0,16,0,0">
+            <!-- Agregar Pago - solo visible cuando status = Creada -->
+            <Button x:Name="AddPaymentButton"
+                    Click="AddPaymentButton_Click"
+                    Visibility="Collapsed">
+                <Button.Background>
+                    <SolidColorBrush Color="#27AE60"/>
+                </Button.Background>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE710;" FontSize="16" Foreground="White"/>
+                    <TextBlock Text="Agregar Pago" Foreground="White"/>
+                </StackPanel>
+            </Button>
+
+            <!-- Anular Factura - oculto cuando status = Anulada -->
+            <Button x:Name="VoidInvoiceButton"
+                    Click="VoidInvoiceButton_Click">
+                <Button.Background>
+                    <SolidColorBrush Color="#E74C3C"/>
+                </Button.Background>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE711;" FontSize="16" Foreground="White"/>
+                    <TextBlock Text="Anular Factura" Foreground="White"/>
+                </StackPanel>
+            </Button>
+
             <Button
                 x:Name="PrintTicketButton"
                 Click="PrintTicketButton_Click">

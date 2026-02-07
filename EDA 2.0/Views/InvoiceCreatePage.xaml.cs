@@ -130,59 +130,88 @@ namespace EDA_2._0.Views
 
         #endregion
 
-        #region Product Search
+        #region Product Selection Modal
 
-        private void ProductSearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+        private async void AddProductButton_Click(object sender, RoutedEventArgs e)
         {
-            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
-            {
-                var text = sender.Text?.Trim().ToLower() ?? "";
-                if (string.IsNullOrEmpty(text))
-                {
-                    sender.ItemsSource = null;
-                    return;
-                }
-
-                var filtered = _allProducts
-                    .Where(p => p.Name.ToLower().Contains(text) ||
-                               (p.Barcode != null && p.Barcode.ToLower().Contains(text)))
-                    .Take(10)
-                    .Select(p => new ProductSuggestion { Product = p, Display = $"{p.Name} - L. {p.Price:N2}" })
-                    .ToList();
-
-                sender.ItemsSource = filtered;
-                sender.DisplayMemberPath = "Display";
-            }
+            await ShowProductSelectionDialog();
         }
 
-        private void ProductSearchBox_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
+        private async Task ShowProductSelectionDialog()
         {
-            if (args.SelectedItem is ProductSuggestion suggestion)
+            var searchBox = new TextBox
             {
-                AddProductToCart(suggestion.Product);
-                sender.Text = string.Empty;
-            }
-        }
+                PlaceholderText = "Buscar por nombre o codigo...",
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Margin = new Thickness(0, 0, 0, 12)
+            };
 
-        private void ProductSearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
-        {
-            if (args.ChosenSuggestion is ProductSuggestion suggestion)
+            var productsList = new ListView
             {
-                AddProductToCart(suggestion.Product);
-                sender.Text = string.Empty;
-            }
-            else if (!string.IsNullOrWhiteSpace(args.QueryText))
-            {
-                // Try exact barcode match
-                var product = _allProducts.FirstOrDefault(p =>
-                    p.Barcode != null && p.Barcode.Equals(args.QueryText.Trim(), StringComparison.OrdinalIgnoreCase));
+                SelectionMode = ListViewSelectionMode.Single,
+                Height = 350,
+                ItemsSource = _allProducts
+            };
 
-                if (product != null)
+            productsList.ItemTemplate = CreateProductItemTemplate();
+
+            searchBox.TextChanged += (s, args) =>
+            {
+                var term = searchBox.Text?.Trim().ToLower() ?? "";
+                productsList.ItemsSource = string.IsNullOrEmpty(term)
+                    ? _allProducts
+                    : _allProducts.Where(p =>
+                        p.Name.ToLower().Contains(term) ||
+                        (p.Barcode != null && p.Barcode.ToLower().Contains(term)))
+                      .ToList();
+            };
+
+            var content = new StackPanel { Width = 500, Children = { searchBox, productsList } };
+
+            var dialog = new ContentDialog
+            {
+                Title = "Seleccionar Producto",
+                Content = content,
+                PrimaryButtonText = "Agregar",
+                CloseButtonText = "Cancelar",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            productsList.DoubleTapped += (s, args) =>
+            {
+                if (productsList.SelectedItem is Product product)
                 {
                     AddProductToCart(product);
-                    sender.Text = string.Empty;
+                    dialog.Hide();
                 }
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary && productsList.SelectedItem is Product selectedProduct)
+            {
+                AddProductToCart(selectedProduct);
             }
+        }
+
+        private DataTemplate CreateProductItemTemplate()
+        {
+            return (DataTemplate)Microsoft.UI.Xaml.Markup.XamlReader.Load(@"
+                <DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'>
+                    <Grid Padding='8,4'>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width='*'/>
+                            <ColumnDefinition Width='80'/>
+                            <ColumnDefinition Width='80'/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column='0' Text='{Binding Name}' VerticalAlignment='Center' TextTrimming='CharacterEllipsis'/>
+                        <TextBlock Grid.Column='1' Text='{Binding Barcode}' VerticalAlignment='Center' Foreground='Gray'/>
+                        <TextBlock Grid.Column='2' VerticalAlignment='Center' HorizontalAlignment='Right'>
+                            <Run Text='L '/>
+                            <Run Text='{Binding Price}'/>
+                        </TextBlock>
+                    </Grid>
+                </DataTemplate>");
         }
 
         private void AddProductToCart(Product product)
@@ -206,10 +235,24 @@ namespace EDA_2._0.Views
             UpdateTotals();
         }
 
-        private class ProductSuggestion
+        #endregion
+
+        #region Price Editing
+
+        private void PriceNumberBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            public Product Product { get; set; } = null!;
-            public string Display { get; set; } = "";
+            if (sender is NumberBox numberBox && numberBox.Tag is CartItem item)
+            {
+                if (!double.IsNaN(numberBox.Value) && numberBox.Value >= 0)
+                {
+                    item.UnitPrice = (decimal)numberBox.Value;
+                }
+                else
+                {
+                    numberBox.Value = (double)item.UnitPrice;
+                }
+                UpdateTotals();
+            }
         }
 
         #endregion

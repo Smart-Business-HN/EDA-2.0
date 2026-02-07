@@ -1,17 +1,24 @@
 using EDA.APPLICATION.DTOs;
 using EDA.APPLICATION.Features.CompanyFeature.Queries;
+using EDA.APPLICATION.Features.InvoiceFeature.Commands.AddPaymentToInvoiceCommand;
+using EDA.APPLICATION.Features.InvoiceFeature.Commands.VoidInvoiceCommand;
 using EDA.APPLICATION.Features.InvoiceFeature.Queries.GetInvoiceByIdQuery;
+using EDA.APPLICATION.Features.PaymentTypeFeature.Queries;
 using EDA.APPLICATION.Interfaces;
 using EDA.DOMAIN.Entities;
+using EDA.DOMAIN.Enums;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.UI;
 
 namespace EDA_2._0.Views
 {
@@ -20,6 +27,7 @@ namespace EDA_2._0.Views
         private readonly IMediator _mediator;
         private int _invoiceId;
         private Invoice? _invoice;
+        private List<PaymentType> _paymentTypes = new();
 
         public InvoiceDetailPage()
         {
@@ -34,7 +42,24 @@ namespace EDA_2._0.Views
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            await LoadPaymentTypes();
             await LoadInvoice();
+        }
+
+        private async Task LoadPaymentTypes()
+        {
+            try
+            {
+                var result = await _mediator.Send(new GetAllPaymentTypesQuery { GetAll = true });
+                if (result.Succeeded && result.Data != null)
+                {
+                    _paymentTypes = result.Data.Items.ToList();
+                }
+            }
+            catch
+            {
+                // Silently ignore payment types loading errors
+            }
         }
 
         private async Task LoadInvoice()
@@ -101,12 +126,171 @@ namespace EDA_2._0.Views
             TotalText.Text = $"L {_invoice.Total:N2}";
             CashReceivedText.Text = $"L {_invoice.CashReceived:N2}";
             ChangeGivenText.Text = $"L {_invoice.ChangeGiven:N2}";
+
+            UpdateStatusBadge();
+        }
+
+        private void UpdateStatusBadge()
+        {
+            if (_invoice == null) return;
+
+            string statusName;
+            Color badgeColor;
+
+            switch (_invoice.Status)
+            {
+                case (int)InvoiceStatusEnum.Created:
+                    statusName = "Creada";
+                    badgeColor = Color.FromArgb(255, 52, 152, 219); // Azul
+                    AddPaymentButton.Visibility = Visibility.Visible;
+                    VoidInvoiceButton.Visibility = Visibility.Visible;
+                    break;
+                case (int)InvoiceStatusEnum.Paid:
+                    statusName = "Pagada";
+                    badgeColor = Color.FromArgb(255, 39, 174, 96); // Verde
+                    AddPaymentButton.Visibility = Visibility.Collapsed;
+                    VoidInvoiceButton.Visibility = Visibility.Visible;
+                    break;
+                case (int)InvoiceStatusEnum.Cancelled:
+                    statusName = "Anulada";
+                    badgeColor = Color.FromArgb(255, 231, 76, 60); // Rojo
+                    AddPaymentButton.Visibility = Visibility.Collapsed;
+                    VoidInvoiceButton.Visibility = Visibility.Collapsed;
+                    break;
+                default:
+                    statusName = "Desconocido";
+                    badgeColor = Color.FromArgb(255, 128, 128, 128); // Gris
+                    AddPaymentButton.Visibility = Visibility.Collapsed;
+                    VoidInvoiceButton.Visibility = Visibility.Collapsed;
+                    break;
+            }
+
+            StatusText.Text = statusName;
+            StatusBadge.Background = new SolidColorBrush(badgeColor);
+            StatusText.Foreground = new SolidColorBrush(Microsoft.UI.Colors.White);
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             var mainWindow = App.MainWindow as MainWindow;
             mainWindow?.NavigateToInvoices();
+        }
+
+        private async void AddPaymentButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_invoice == null) return;
+
+            var paymentTypeCombo = new ComboBox
+            {
+                PlaceholderText = "Tipo de pago",
+                DisplayMemberPath = "Name",
+                ItemsSource = _paymentTypes,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            var amountBox = new NumberBox
+            {
+                Header = $"Monto (Pendiente: L {_invoice.OutstandingAmount:N2})",
+                PlaceholderText = "0.00",
+                Value = (double)_invoice.OutstandingAmount,
+                Minimum = 0.01,
+                Maximum = (double)_invoice.OutstandingAmount,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
+            };
+
+            var content = new StackPanel { Width = 300, Spacing = 12, Children = { paymentTypeCombo, amountBox } };
+
+            var dialog = new ContentDialog
+            {
+                Title = "Agregar Pago",
+                Content = content,
+                PrimaryButtonText = "Agregar",
+                CloseButtonText = "Cancelar",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary &&
+                paymentTypeCombo.SelectedItem is PaymentType paymentType &&
+                !double.IsNaN(amountBox.Value) && amountBox.Value > 0)
+            {
+                SetLoading(true);
+
+                try
+                {
+                    var command = new AddPaymentToInvoiceCommand
+                    {
+                        InvoiceId = _invoiceId,
+                        PaymentTypeId = paymentType.Id,
+                        Amount = (decimal)amountBox.Value
+                    };
+
+                    var addResult = await _mediator.Send(command);
+                    if (addResult.Succeeded)
+                    {
+                        await LoadInvoice();
+                        await ShowSuccess("Pago agregado exitosamente.");
+                    }
+                    else
+                    {
+                        await ShowError(addResult.Message ?? "Error al agregar pago.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await ShowError($"Error: {ex.Message}");
+                }
+                finally
+                {
+                    SetLoading(false);
+                }
+            }
+        }
+
+        private async void VoidInvoiceButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_invoice == null) return;
+
+            var confirmDialog = new ContentDialog
+            {
+                Title = "Confirmar Anulacion",
+                Content = "¿Esta seguro que desea anular esta factura? Esta accion no se puede deshacer.",
+                PrimaryButtonText = "Anular",
+                CloseButtonText = "Cancelar",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await confirmDialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                SetLoading(true);
+
+                try
+                {
+                    var command = new VoidInvoiceCommand { InvoiceId = _invoiceId };
+                    var voidResult = await _mediator.Send(command);
+
+                    if (voidResult.Succeeded)
+                    {
+                        await LoadInvoice();
+                        await ShowSuccess("Factura anulada exitosamente.");
+                    }
+                    else
+                    {
+                        await ShowError(voidResult.Message ?? "Error al anular factura.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await ShowError($"Error: {ex.Message}");
+                }
+                finally
+                {
+                    SetLoading(false);
+                }
+            }
         }
 
         private async void PrintTicketButton_Click(object sender, RoutedEventArgs e)
@@ -256,6 +440,38 @@ namespace EDA_2._0.Views
                             Glyph = "\uEA39",
                             FontSize = 48,
                             Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red),
+                            HorizontalAlignment = HorizontalAlignment.Center
+                        },
+                        new TextBlock
+                        {
+                            Text = message,
+                            TextWrapping = TextWrapping.Wrap,
+                            HorizontalAlignment = HorizontalAlignment.Center
+                        }
+                    }
+                },
+                CloseButtonText = "Aceptar",
+                XamlRoot = this.XamlRoot
+            };
+
+            await dialog.ShowAsync();
+        }
+
+        private async Task ShowSuccess(string message)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Exito",
+                Content = new StackPanel
+                {
+                    Spacing = 12,
+                    Children =
+                    {
+                        new FontIcon
+                        {
+                            Glyph = "\uE73E",
+                            FontSize = 48,
+                            Foreground = new SolidColorBrush(Color.FromArgb(255, 39, 174, 96)),
                             HorizontalAlignment = HorizontalAlignment.Center
                         },
                         new TextBlock
