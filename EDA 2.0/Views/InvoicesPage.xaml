@@ -25,17 +25,32 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,24">
-            <TextBlock
-                Text="Facturas"
-                FontSize="28"
-                FontWeight="SemiBold"/>
-            <TextBlock
-                Text="Consultar y gestionar las facturas emitidas"
-                FontSize="14"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Margin="0,4,0,0"/>
-        </StackPanel>
+        <Grid Grid.Row="0" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock
+                    Text="Facturas"
+                    FontSize="28"
+                    FontWeight="SemiBold"/>
+                <TextBlock
+                    Text="Consultar y gestionar las facturas emitidas"
+                    FontSize="14"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Margin="0,4,0,0"/>
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Click="CreateInvoice_Click"
+                    Style="{StaticResource AccentButtonStyle}"
+                    VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE710;" FontSize="14"/>
+                    <TextBlock Text="Crear Factura"/>
+                </StackPanel>
+            </Button>
+        </Grid>
 
         <!-- Filters -->
         <Grid Grid.Row="1" Margin="0,0,0,16">

@@ -1,7 +1,7 @@
 using EDA.APPLICATION.DTOs;
 using EDA.APPLICATION.Repository;
-using EDA.APPLICATION.Specifications.ShiftSpecification;
 using EDA.APPLICATION.Specifications.InvoiceSpecification;
+using EDA.APPLICATION.Specifications.ShiftSpecification;
 using EDA.APPLICATION.Wrappers;
 using EDA.DOMAIN.Entities;
 using MediatR;

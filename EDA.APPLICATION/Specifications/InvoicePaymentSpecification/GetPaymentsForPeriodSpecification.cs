@@ -1,6 +1,5 @@
 using Ardalis.Specification;
 using EDA.DOMAIN.Entities;
-using System.Collections.Generic;
 
 namespace EDA.APPLICATION.Specifications.InvoicePaymentSpecification
 {

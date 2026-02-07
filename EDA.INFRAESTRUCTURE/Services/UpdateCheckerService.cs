@@ -1,11 +1,8 @@
 using EDA.APPLICATION.DTOs;
 using EDA.APPLICATION.Interfaces;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace EDA.INFRAESTRUCTURE.Services
 {

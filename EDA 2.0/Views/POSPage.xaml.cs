@@ -4,6 +4,7 @@ using EDA.APPLICATION.Features.CompanyFeature.Queries;
 using EDA.APPLICATION.Features.CustomerFeature.Commands.CreateCustomerCommand;
 using EDA.APPLICATION.Features.CustomerFeature.Queries;
 using EDA.APPLICATION.Features.DiscountFeature.Queries;
+using EDA.APPLICATION.Features.FamilyFeature.Queries;
 using EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand;
 using EDA.APPLICATION.Features.PaymentTypeFeature.Queries;
 using EDA.APPLICATION.Features.PendingSaleFeature.Commands.CreatePendingSaleCommand;
@@ -12,7 +13,6 @@ using EDA.APPLICATION.Features.PendingSaleFeature.Commands.UpdatePendingSaleComm
 using EDA.APPLICATION.Features.PendingSaleFeature.Queries;
 using EDA.APPLICATION.Features.ProductFeature.Commands.CreateProductCommand;
 using EDA.APPLICATION.Features.ProductFeature.Queries;
-using EDA.APPLICATION.Features.FamilyFeature.Queries;
 using EDA.APPLICATION.Features.TaxFeature.Queries;
 using EDA.APPLICATION.Interfaces;
 using EDA.DOMAIN.Entities;
@@ -28,8 +28,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace EDA_2._0.Views
 {
@@ -138,6 +138,9 @@ namespace EDA_2._0.Views
         private SaleSession _currentSession = null!;
         private int _saleCounter = 0;
 
+        private bool _isCredit = false;
+        private int _creditDays = 0;
+
         public POSPage()
         {
             InitializeComponent();
@@ -146,6 +149,9 @@ namespace EDA_2._0.Views
             CartListView.ItemsSource = _cartItems;
             PaymentsListView.ItemsSource = _paymentItems;
         }
+
+        private Microsoft.UI.Xaml.Media.SolidColorBrush GetBrush(string key) =>
+            (Microsoft.UI.Xaml.Media.SolidColorBrush)Application.Current.Resources[key];
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
@@ -289,13 +295,14 @@ namespace EDA_2._0.Views
                         {
                             Text = "Todos",
                             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                            HorizontalAlignment = HorizontalAlignment.Center
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White)
                         },
                         new TextBlock
                         {
                             Text = $"Productos: {totalProductCount}",
                             FontSize = 11,
-                            Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray),
+                            Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White),
                             HorizontalAlignment = HorizontalAlignment.Center
                         }
                     }
@@ -334,13 +341,14 @@ namespace EDA_2._0.Views
                             {
                                 Text = family.Name,
                                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                                HorizontalAlignment = HorizontalAlignment.Center
+                                HorizontalAlignment = HorizontalAlignment.Center,
+                                Foreground = GetBrush("SBOnLightPrimary")
                             },
                             new TextBlock
                             {
                                 Text = $"Productos: {productCount}",
                                 FontSize = 11,
-                                Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray),
+                                Foreground = GetBrush("SBOnLightSecondary"),
                                 HorizontalAlignment = HorizontalAlignment.Center
                             }
                         }
@@ -382,14 +390,20 @@ namespace EDA_2._0.Views
                         ? (Style)Application.Current.Resources["AccentButtonStyle"]
                         : (Style)Application.Current.Resources["DefaultButtonStyle"];
 
-                    // Actualizar color del texto secundario según selección
+                    // Actualizar color del texto según selección
                     if (button.Content is StackPanel stackPanel && stackPanel.Children.Count >= 2)
                     {
+                        if (stackPanel.Children[0] is TextBlock nameText)
+                        {
+                            nameText.Foreground = isSelected
+                                ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White)
+                                : GetBrush("SBOnLightPrimary");
+                        }
                         if (stackPanel.Children[1] is TextBlock countText)
                         {
                             countText.Foreground = isSelected
                                 ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White)
-                                : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
+                                : GetBrush("SBOnLightSecondary");
                         }
                     }
                 }
@@ -750,7 +764,7 @@ namespace EDA_2._0.Views
             }
 
             // Habilitar/deshabilitar botón facturar
-            FacturarButton.IsEnabled = _cartItems.Count > 0 && totalPaid >= total && total > 0;
+            FacturarButton.IsEnabled = _cartItems.Count > 0 && total > 0 && (_isCredit || totalPaid >= total);
         }
 
         #endregion
@@ -1122,6 +1136,14 @@ namespace EDA_2._0.Views
                 SelectedDiscountPanel.Visibility = Visibility.Collapsed;
             }
 
+            // Resetear credito al cambiar de sesion
+            _isCredit = false;
+            _creditDays = 0;
+            CreditToggle.IsOn = false;
+            CreditOptionsPanel.Visibility = Visibility.Collapsed;
+            CreditDaysNumberBox.Value = double.NaN;
+            DueDatePreview.Text = string.Empty;
+
             PaymentTypeComboBox.SelectedIndex = -1;
             PaymentAmountTextBox.Text = string.Empty;
             UpdateTotals();
@@ -1240,7 +1262,10 @@ namespace EDA_2._0.Views
                 {
                     Text = session.DisplayName,
                     VerticalAlignment = VerticalAlignment.Center,
-                    FontWeight = isActive ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal
+                    FontWeight = isActive ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal,
+                    Foreground = isActive
+                        ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White)
+                        : GetBrush("SBOnLightPrimary")
                 };
 
                 var tabContent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
@@ -1254,7 +1279,7 @@ namespace EDA_2._0.Views
                         Text = $"({session.CartItems.Count})",
                         FontSize = 11,
                         VerticalAlignment = VerticalAlignment.Center,
-                        Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray)
+                        Foreground = GetBrush("SBOnLightSecondary")
                     });
                 }
 
@@ -1269,6 +1294,7 @@ namespace EDA_2._0.Views
                         Height = 20,
                         Padding = new Thickness(0),
                         Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent),
+                        Foreground = GetBrush("SBOnLightSecondary"),
                         Tag = session,
                         FontSize = 10,
                         VerticalAlignment = VerticalAlignment.Center
@@ -1312,7 +1338,8 @@ namespace EDA_2._0.Views
                 Height = 36,
                 Padding = new Thickness(0),
                 FontSize = 16,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold
+                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                Foreground = GetBrush("SBOnLightPrimary")
             };
             addButton.Click += NewSaleTab_Click;
             SaleTabsPanel.Children.Add(addButton);
@@ -1515,11 +1542,29 @@ namespace EDA_2._0.Views
                     }
                 }
 
-                // Validar pagos
-                if (_paymentItems.Count == 0)
+                // Validar credito
+                if (_isCredit)
                 {
-                    await ShowError("Debe agregar al menos un método de pago.");
-                    return;
+                    if (_creditDays <= 0)
+                    {
+                        await ShowError("Debe especificar los días de crédito.");
+                        return;
+                    }
+
+                    if (selectedCustomer.Id == 1)
+                    {
+                        await ShowError("Las facturas al crédito requieren un cliente identificado (no Consumidor Final).");
+                        return;
+                    }
+                }
+                else
+                {
+                    // Validar pagos solo para facturas de contado
+                    if (_paymentItems.Count == 0)
+                    {
+                        await ShowError("Debe agregar al menos un método de pago.");
+                        return;
+                    }
                 }
 
                 // Validar usuario
@@ -1595,7 +1640,9 @@ namespace EDA_2._0.Views
                     CashReceived = cashReceived,
                     ChangeGiven = changeGiven,
                     Items = items,
-                    Payments = payments
+                    Payments = payments,
+                    IsCredit = _isCredit,
+                    CreditDays = _isCredit ? _creditDays : null
                 };
 
                 // Enviar comando via MediatR
@@ -1608,7 +1655,16 @@ namespace EDA_2._0.Views
                     // Generar e imprimir PDF
                     await GenerateAndPrintInvoicePdf(invoice, selectedCustomer, _activeCai);
 
-                    await ShowSuccess($"Factura {invoice.InvoiceNumber} creada exitosamente.\n\nTotal: L. {invoice.Total:N2}");
+                    var successMessage = $"Factura {invoice.InvoiceNumber} creada exitosamente.\n\nTotal: L. {invoice.Total:N2}";
+                    if (_isCredit)
+                    {
+                        successMessage += $"\n\nCrédito: {_creditDays} días";
+                        if (invoice.DueDate.HasValue)
+                            successMessage += $"\nVencimiento: {invoice.DueDate.Value:dd/MM/yyyy}";
+                        if (invoice.OutstandingAmount > 0)
+                            successMessage += $"\nSaldo pendiente: L. {invoice.OutstandingAmount:N2}";
+                    }
+                    await ShowSuccess(successMessage);
 
                     // Eliminar sesión facturada y cambiar a otra
                     RemoveCurrentSessionAfterInvoice();
@@ -1648,9 +1704,69 @@ namespace EDA_2._0.Views
             var defaultCustomer = _customers.FirstOrDefault(c => c.Id == 1);
             SetSelectedCustomer(defaultCustomer);
 
+            // Resetear credito
+            _isCredit = false;
+            _creditDays = 0;
+            CreditToggle.IsOn = false;
+            CreditOptionsPanel.Visibility = Visibility.Collapsed;
+            CreditDaysNumberBox.Value = double.NaN;
+            DueDatePreview.Text = string.Empty;
+
             PaymentTypeComboBox.SelectedIndex = -1;
             PaymentAmountTextBox.Text = string.Empty;
             UpdateTotals();
+        }
+
+        private void CreditToggle_Toggled(object sender, RoutedEventArgs e)
+        {
+            _isCredit = CreditToggle.IsOn;
+            CreditOptionsPanel.Visibility = _isCredit ? Visibility.Visible : Visibility.Collapsed;
+
+            if (!_isCredit)
+            {
+                _creditDays = 0;
+                CreditDaysNumberBox.Value = double.NaN;
+                DueDatePreview.Text = string.Empty;
+            }
+
+            UpdateTotals();
+        }
+
+        private void CreditDays_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string tagValue && int.TryParse(tagValue, out int days))
+            {
+                _creditDays = days;
+                CreditDaysNumberBox.Value = days;
+                UpdateDueDatePreview();
+            }
+        }
+
+        private void CreditDaysNumberBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        {
+            if (double.IsNaN(args.NewValue))
+            {
+                _creditDays = 0;
+                DueDatePreview.Text = string.Empty;
+            }
+            else
+            {
+                _creditDays = (int)args.NewValue;
+                UpdateDueDatePreview();
+            }
+        }
+
+        private void UpdateDueDatePreview()
+        {
+            if (_creditDays > 0)
+            {
+                var dueDate = DateTime.Now.AddDays(_creditDays);
+                DueDatePreview.Text = $"Fecha de vencimiento: {dueDate:dd/MM/yyyy}";
+            }
+            else
+            {
+                DueDatePreview.Text = string.Empty;
+            }
         }
 
         private async Task GenerateAndPrintInvoicePdf(Invoice invoice, Customer customer, Cai cai)

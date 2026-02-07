@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="EDA_2._0.Views.InvoiceCreatePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EDA_2._0.Views"
+    xmlns:converters="using:EDA_2._0.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent"
+    Loaded="Page_Loaded">
+
+    <Page.Resources>
+        <converters:CurrencyConverter x:Key="CurrencyConverter"/>
+    </Page.Resources>
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header with Back Button -->
+        <Grid Grid.Row="0" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Button
+                Grid.Column="0"
+                Content="&#xE72B;"
+                FontFamily="Segoe MDL2 Assets"
+                Click="BackButton_Click"
+                VerticalAlignment="Center"/>
+
+            <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                <TextBlock
+                    Text="Crear Factura"
+                    FontSize="28"
+                    FontWeight="SemiBold"/>
+                <TextBlock
+                    x:Name="CaiInfoText"
+                    Text="Cargando CAI..."
+                    FontSize="14"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <ProgressRing
+                x:Name="LoadingRing"
+                Grid.Column="2"
+                IsActive="False"
+                Width="24"
+                Height="24"/>
+        </Grid>
+
+        <!-- Main Content: Two Columns -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="380"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ========== LEFT COLUMN: Products & Cart ========== -->
+            <Grid Grid.Column="0" Margin="0,0,16,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Product Search -->
+                <StackPanel Grid.Row="0" Spacing="8" Margin="0,0,0,16">
+                    <TextBlock Text="AGREGAR PRODUCTOS" FontWeight="SemiBold" FontSize="14"/>
+                    <AutoSuggestBox
+                        x:Name="ProductSearchBox"
+                        PlaceholderText="Buscar producto por nombre o codigo de barras..."
+                        QueryIcon="Find"
+                        TextChanged="ProductSearchBox_TextChanged"
+                        SuggestionChosen="ProductSearchBox_SuggestionChosen"
+                        QuerySubmitted="ProductSearchBox_QuerySubmitted"/>
+                </StackPanel>
+
+                <!-- Cart Items -->
+                <StackPanel Grid.Row="1" Spacing="8">
+                    <TextBlock Text="DETALLE DE FACTURA" FontWeight="SemiBold" FontSize="14"/>
+                    <ListView
+                        x:Name="CartListView"
+                        SelectionMode="None">
+                        <ListView.Header>
+                            <Grid Padding="12,8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="40"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Producto" FontWeight="SemiBold" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="Cantidad" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="P. Unit." FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="3" Text="Subtotal" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="4" Text="" FontSize="12"/>
+                            </Grid>
+                        </ListView.Header>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="40"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Product.Name}"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"/>
+
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="2">
+                                        <Button Content="-"
+                                                Click="DecreaseQuantity_Click"
+                                                Tag="{Binding}"
+                                                Width="28" Height="28"
+                                                Padding="0"
+                                                VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Quantity}"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   MinWidth="30"
+                                                   TextAlignment="Center"/>
+                                        <Button Content="+"
+                                                Click="IncreaseQuantity_Click"
+                                                Tag="{Binding}"
+                                                Width="28" Height="28"
+                                                Padding="0"
+                                                VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding UnitPrice, Converter={StaticResource CurrencyConverter}}"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Right"/>
+
+                                    <TextBlock Grid.Column="3"
+                                               Text="{Binding Subtotal, Converter={StaticResource CurrencyConverter}}"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Right"
+                                               FontWeight="SemiBold"/>
+
+                                    <Button Grid.Column="4"
+                                            Content="&#xE711;"
+                                            FontFamily="Segoe MDL2 Assets"
+                                            Click="RemoveItem_Click"
+                                            Tag="{Binding}"
+                                            Width="28" Height="28"
+                                            Padding="0"
+                                            Background="Transparent"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackPanel>
+            </Grid>
+
+            <!-- ========== RIGHT COLUMN: Invoice Config ========== -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="16">
+
+                    <!-- Customer Section -->
+                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="CLIENTE" FontWeight="SemiBold" FontSize="14"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="CustomerSelectButton"
+                                        Grid.Column="0"
+                                        Content="Consumidor Final"
+                                        Click="CustomerSelectButton_Click"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Left"/>
+                                <Button Grid.Column="1"
+                                        Content="+"
+                                        Click="NewCustomerButton_Click"
+                                        Margin="8,0,0,0"
+                                        Width="40" Height="32"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Discount Section -->
+                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="DESCUENTO" FontWeight="SemiBold" FontSize="14"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ComboBox x:Name="DiscountComboBox"
+                                          Grid.Column="0"
+                                          PlaceholderText="Sin descuento"
+                                          DisplayMemberPath="Name"
+                                          SelectionChanged="DiscountComboBox_SelectionChanged"
+                                          HorizontalAlignment="Stretch"/>
+                                <Button x:Name="RemoveDiscountButton"
+                                        Grid.Column="1"
+                                        Content="Quitar"
+                                        Click="RemoveDiscount_Click"
+                                        Margin="8,0,0,0"
+                                        Visibility="Collapsed"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Totals Section -->
+                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="TOTALES" FontWeight="SemiBold" FontSize="14"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Subtotal"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock x:Name="SubtotalText" Grid.Column="1" Text="L. 0.00"/>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Descuento"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock x:Name="DiscountAmountText" Grid.Column="1" Text="L. 0.00" Foreground="Green"/>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Impuesto"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock x:Name="TaxAmountText" Grid.Column="1" Text="L. 0.00"/>
+                            </Grid>
+                            <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,4"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="TOTAL" FontSize="18" FontWeight="Bold"/>
+                                <TextBlock x:Name="TotalText" Grid.Column="1" Text="L. 0.00" FontSize="18" FontWeight="Bold"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Payments Section -->
+                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="PAGOS" FontWeight="SemiBold" FontSize="14"/>
+
+                            <ListView x:Name="PaymentsListView"
+                                      SelectionMode="None"
+                                      MaxHeight="120">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Padding="4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="80"/>
+                                                <ColumnDefinition Width="28"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding PaymentType.Name}"
+                                                       VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Amount, Converter={StaticResource CurrencyConverter}}"
+                                                       VerticalAlignment="Center"
+                                                       HorizontalAlignment="Right"
+                                                       FontWeight="SemiBold"/>
+                                            <Button Grid.Column="2"
+                                                    Content="&#xE711;"
+                                                    FontFamily="Segoe MDL2 Assets"
+                                                    Click="RemovePayment_Click"
+                                                    Tag="{Binding}"
+                                                    Width="24" Height="24"
+                                                    Padding="0"
+                                                    Background="Transparent"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ComboBox x:Name="PaymentTypeComboBox"
+                                          Grid.Column="0"
+                                          PlaceholderText="Tipo de pago"
+                                          DisplayMemberPath="Name"
+                                          HorizontalAlignment="Stretch"/>
+                                <TextBox x:Name="PaymentAmountTextBox"
+                                         Grid.Column="1"
+                                         PlaceholderText="Monto"
+                                         Margin="8,0,0,0"/>
+                                <Button Grid.Column="2"
+                                        Content="Agregar"
+                                        Click="AddPayment_Click"
+                                        Margin="8,0,0,0"
+                                        Style="{StaticResource AccentButtonStyle}"/>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Total Pagado"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock x:Name="TotalPaidText" Grid.Column="1" Text="L. 0.00" FontWeight="SemiBold" Foreground="Green"/>
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="PendingLabelText" Grid.Column="0" Text="Pendiente"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock x:Name="PendingAmountText" Grid.Column="1" Text="L. 0.00" FontWeight="SemiBold" Foreground="Red"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Credit Section -->
+                    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
+                        <StackPanel Spacing="8">
+                            <ToggleSwitch x:Name="CreditToggle"
+                                          Header="Factura al Credito"
+                                          Toggled="CreditToggle_Toggled"/>
+                            <StackPanel x:Name="CreditOptionsPanel" Visibility="Collapsed" Spacing="8">
+                                <TextBlock Text="Dias de Credito" FontWeight="SemiBold"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="15" Click="CreditDays_Click" Tag="15" MinWidth="50"/>
+                                    <Button Content="30" Click="CreditDays_Click" Tag="30" MinWidth="50"/>
+                                    <Button Content="60" Click="CreditDays_Click" Tag="60" MinWidth="50"/>
+                                    <Button Content="90" Click="CreditDays_Click" Tag="90" MinWidth="50"/>
+                                </StackPanel>
+                                <NumberBox x:Name="CreditDaysNumberBox"
+                                           Header="O ingrese dias:"
+                                           Minimum="1" Maximum="365"
+                                           SpinButtonPlacementMode="Inline"
+                                           ValueChanged="CreditDaysNumberBox_ValueChanged"/>
+                                <TextBlock x:Name="DueDatePreview" FontSize="12"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Create Button -->
+                    <Button
+                        x:Name="CreateInvoiceButton"
+                        Content="CREAR FACTURA"
+                        Click="CreateInvoice_Click"
+                        Style="{StaticResource AccentButtonStyle}"
+                        HorizontalAlignment="Stretch"
+                        MinHeight="60"
+                        FontSize="16"
+                        FontWeight="Bold"
+                        IsEnabled="False"/>
+
+                    <Button
+                        Content="Limpiar"
+                        Click="ClearButton_Click"
+                        HorizontalAlignment="Stretch"
+                        MinHeight="44"/>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Page>

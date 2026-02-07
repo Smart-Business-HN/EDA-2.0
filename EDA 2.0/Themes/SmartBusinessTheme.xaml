@@ -1,0 +1,81 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.ThemeDictionaries>
+
+        <!-- ========== LIGHT THEME ========== -->
+        <ResourceDictionary x:Key="Light">
+            <!-- Panel backgrounds -->
+            <SolidColorBrush x:Key="SBNavyPrimary" Color="#1B2D4F"/>
+            <SolidColorBrush x:Key="SBNavySecondary" Color="#223759"/>
+            <SolidColorBrush x:Key="SBNavyDeep" Color="#152340"/>
+            <SolidColorBrush x:Key="SBBlueSoft" Color="#EAF2FB"/>
+            <SolidColorBrush x:Key="SBFamilyBarBg" Color="#142238"/>
+
+            <!-- Accent -->
+            <SolidColorBrush x:Key="SBBlueAccent" Color="#0078D4"/>
+
+            <!-- Text on dark backgrounds -->
+            <SolidColorBrush x:Key="SBOnDarkPrimary" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="SBOnDarkSecondary" Color="#A8C0D8"/>
+
+            <!-- Text on light backgrounds (payment panel) -->
+            <SolidColorBrush x:Key="SBOnLightPrimary" Color="#1B2D4F"/>
+            <SolidColorBrush x:Key="SBOnLightSecondary" Color="#4A6A8A"/>
+
+            <!-- Sale tabs -->
+            <SolidColorBrush x:Key="SBSaleTabInactive" Color="#FFFFFF20"/>
+
+            <!-- Cart header secondary bg (for totals rows, etc.) -->
+            <SolidColorBrush x:Key="SBCartHeaderBg" Color="#1A2744"/>
+
+            <!-- Divider on dark -->
+            <SolidColorBrush x:Key="SBDividerOnDark" Color="#FFFFFF1A"/>
+
+            <!-- Divider on light -->
+            <SolidColorBrush x:Key="SBDividerOnLight" Color="#1B2D4F20"/>
+
+            <!-- Payment panel card bg (for sub-sections like totals) -->
+            <SolidColorBrush x:Key="SBPaymentCardBg" Color="#DCE8F5"/>
+        </ResourceDictionary>
+
+        <!-- ========== DARK THEME ========== -->
+        <ResourceDictionary x:Key="Dark">
+            <!-- Panel backgrounds -->
+            <SolidColorBrush x:Key="SBNavyPrimary" Color="#0F1E30"/>
+            <SolidColorBrush x:Key="SBNavySecondary" Color="#162842"/>
+            <SolidColorBrush x:Key="SBNavyDeep" Color="#0A1520"/>
+            <SolidColorBrush x:Key="SBBlueSoft" Color="#1A2535"/>
+            <SolidColorBrush x:Key="SBFamilyBarBg" Color="#0A1520"/>
+
+            <!-- Accent -->
+            <SolidColorBrush x:Key="SBBlueAccent" Color="#4DA3E8"/>
+
+            <!-- Text on dark backgrounds -->
+            <SolidColorBrush x:Key="SBOnDarkPrimary" Color="#F0F0F0"/>
+            <SolidColorBrush x:Key="SBOnDarkSecondary" Color="#8BA4BC"/>
+
+            <!-- Text on light backgrounds (payment panel - still dark in dark mode) -->
+            <SolidColorBrush x:Key="SBOnLightPrimary" Color="#E8E8E8"/>
+            <SolidColorBrush x:Key="SBOnLightSecondary" Color="#9AACBE"/>
+
+            <!-- Sale tabs -->
+            <SolidColorBrush x:Key="SBSaleTabInactive" Color="#FFFFFF15"/>
+
+            <!-- Cart header secondary bg -->
+            <SolidColorBrush x:Key="SBCartHeaderBg" Color="#0D1822"/>
+
+            <!-- Divider on dark -->
+            <SolidColorBrush x:Key="SBDividerOnDark" Color="#FFFFFF12"/>
+
+            <!-- Divider on light -->
+            <SolidColorBrush x:Key="SBDividerOnLight" Color="#FFFFFF15"/>
+
+            <!-- Payment panel card bg -->
+            <SolidColorBrush x:Key="SBPaymentCardBg" Color="#1E2E3F"/>
+        </ResourceDictionary>
+
+    </ResourceDictionary.ThemeDictionaries>
+
+</ResourceDictionary>

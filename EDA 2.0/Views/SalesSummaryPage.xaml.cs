@@ -1,4 +1,3 @@
-using EDA.APPLICATION.DTOs;
 using EDA.APPLICATION.Features.SalesSummaryFeature.Queries;
 using EDA.APPLICATION.Features.UserFeature.Queries;
 using EDA.DOMAIN.Entities;

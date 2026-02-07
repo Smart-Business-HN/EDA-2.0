@@ -146,6 +146,8 @@ namespace EDA.INFRAESTRUCTURE
                 entity.Property(e => e.TaxedAt18Percent).HasPrecision(18, 2);
                 entity.Property(e => e.TaxesAt18Percent).HasPrecision(18, 2);
                 entity.Property(e => e.Exempt).HasPrecision(18, 2);
+                entity.Property(e => e.OutstandingAmount).HasPrecision(18, 2);
+                entity.Property(e => e.Status).IsRequired();
                 entity.HasOne(e => e.Customer)
                       .WithMany()
                       .HasForeignKey(e => e.CustomerId)

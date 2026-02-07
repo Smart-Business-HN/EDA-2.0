@@ -1,6 +1,6 @@
 
-using EDA.APPLICATION.Repository;
 using Ardalis.Specification.EntityFrameworkCore;
+using EDA.APPLICATION.Repository;
 
 namespace EDA.INFRAESTRUCTURE.Repository
 {

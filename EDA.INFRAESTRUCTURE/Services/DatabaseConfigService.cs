@@ -1,11 +1,8 @@
 using EDA.APPLICATION.Interfaces;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 
 namespace EDA.INFRAESTRUCTURE.Services
 {

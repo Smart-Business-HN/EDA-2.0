@@ -123,6 +123,12 @@ namespace EDA_2._0.Views
             }
         }
 
+        private void CreateInvoice_Click(object sender, RoutedEventArgs e)
+        {
+            var mainWindow = App.MainWindow as MainWindow;
+            mainWindow?.NavigateToInvoiceCreate();
+        }
+
         private void ViewDetailButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.Tag is Invoice invoice)

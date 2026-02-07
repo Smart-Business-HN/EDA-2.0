@@ -1,5 +1,3 @@
-using System;
-
 namespace EDA.APPLICATION.DTOs
 {
     public class MonthlyClosingReportData

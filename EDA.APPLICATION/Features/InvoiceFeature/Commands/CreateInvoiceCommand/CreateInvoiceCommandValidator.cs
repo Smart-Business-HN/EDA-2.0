@@ -32,9 +32,27 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
             RuleFor(x => x.Total)
                 .GreaterThan(0).WithMessage("El total de la factura debe ser mayor a 0.");
 
-            // Debe tener pagos
-            RuleFor(x => x.Payments)
-                .NotEmpty().WithMessage("Debe agregar al menos un método de pago.");
+            // Facturas de contado: debe tener pagos que cubran el total
+            When(x => !x.IsCredit, () =>
+            {
+                RuleFor(x => x.Payments)
+                    .NotEmpty().WithMessage("Debe agregar al menos un método de pago.");
+
+                RuleFor(x => x)
+                    .Must(cmd => cmd.Payments.Sum(p => p.Amount) >= cmd.Total)
+                    .WithMessage("El total de los pagos debe cubrir el total de la factura.");
+            });
+
+            // Facturas al credito: debe tener dias de credito y cliente identificado
+            When(x => x.IsCredit, () =>
+            {
+                RuleFor(x => x.CreditDays)
+                    .NotNull().WithMessage("Debe especificar los dias de credito.")
+                    .GreaterThan(0).WithMessage("Los dias de credito deben ser mayor a 0.");
+
+                RuleFor(x => x.CustomerId)
+                    .NotEqual(1).WithMessage("Las facturas al credito requieren un cliente identificado (no Consumidor Final).");
+            });
 
             // Validar cada item
             RuleForEach(x => x.Items).ChildRules(item =>
@@ -52,7 +70,7 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
                     .GreaterThanOrEqualTo(0).WithMessage("El precio unitario debe ser mayor o igual a 0.");
             });
 
-            // Validar cada pago
+            // Validar cada pago (cuando hay pagos)
             RuleForEach(x => x.Payments).ChildRules(payment =>
             {
                 payment.RuleFor(p => p.PaymentTypeId)
@@ -61,11 +79,6 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
                 payment.RuleFor(p => p.Amount)
                     .GreaterThan(0).WithMessage("El monto del pago debe ser mayor a 0.");
             });
-
-            // Validar que los pagos cubran el total
-            RuleFor(x => x)
-                .Must(cmd => cmd.Payments.Sum(p => p.Amount) >= cmd.Total)
-                .WithMessage("El total de los pagos debe cubrir el total de la factura.");
         }
     }
 }

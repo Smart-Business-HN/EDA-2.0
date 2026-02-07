@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace EDA.DOMAIN
+﻿namespace EDA.DOMAIN
 {
     public class MasterPassword
     {

@@ -13,7 +13,6 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 
 namespace EDA_2._0.Views
 {
@@ -377,6 +376,11 @@ namespace EDA_2._0.Views
             detailPage.SetInvoiceId(invoiceId);
             ContentFrame.Navigate(typeof(InvoiceDetailPage), invoiceId);
             ContentFrame.Content = detailPage;
+        }
+
+        public void NavigateToInvoiceCreate()
+        {
+            ContentFrame.Navigate(typeof(InvoiceCreatePage));
         }
 
         public void NavigateToInvoices()

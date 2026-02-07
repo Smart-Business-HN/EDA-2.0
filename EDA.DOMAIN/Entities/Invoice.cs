@@ -27,6 +27,12 @@
         public decimal TaxesAt18Percent { get; set; }    // Impuesto al 18%
         public decimal Exempt { get; set; }               // Total exento
 
+        // Credit fields
+        public int Status { get; set; }
+        public decimal OutstandingAmount { get; set; }
+        public int? CreditDays { get; set; }
+        public DateTime? DueDate { get; set; }
+
         public List<SoldProduct>? SoldProducts { get; set; }
         public List<InvoicePayment>? InvoicePayments { get; set; }
     }

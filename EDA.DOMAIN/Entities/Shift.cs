@@ -1,5 +1,3 @@
-using System;
-
 namespace EDA.DOMAIN.Entities
 {
     public class Shift

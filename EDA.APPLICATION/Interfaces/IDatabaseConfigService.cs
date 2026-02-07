@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 namespace EDA.APPLICATION.Interfaces
 {
     public interface IDatabaseConfigService

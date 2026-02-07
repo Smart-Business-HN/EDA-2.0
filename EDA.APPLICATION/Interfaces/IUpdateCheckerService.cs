@@ -1,5 +1,4 @@
 using EDA.APPLICATION.DTOs;
-using System.Threading.Tasks;
 
 namespace EDA.APPLICATION.Interfaces
 {

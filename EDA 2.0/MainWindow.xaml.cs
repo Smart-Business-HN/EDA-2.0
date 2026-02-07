@@ -26,6 +26,14 @@ namespace EDA_2._0
             }
         }
 
+        public void NavigateToInvoiceCreate()
+        {
+            if (ContentFrame.Content is MainMenuPage mainMenuPage)
+            {
+                mainMenuPage.NavigateToInvoiceCreate();
+            }
+        }
+
         public void NavigateToInvoices()
         {
             if (ContentFrame.Content is MainMenuPage mainMenuPage)

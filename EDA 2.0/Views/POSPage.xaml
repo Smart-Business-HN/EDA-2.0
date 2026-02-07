@@ -25,12 +25,16 @@
         </Grid.RowDefinitions>
 
         <!-- Fila de Familias (arriba de todo) -->
-        <ScrollViewer Grid.Row="0"
-                      HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Disabled"
-                      Margin="0,0,0,12">
-            <StackPanel x:Name="FamiliesPanel" Orientation="Horizontal" Spacing="8"/>
-        </ScrollViewer>
+        <Border Grid.Row="0"
+                Background="{ThemeResource SBBlueSoft}"
+                CornerRadius="8"
+                Padding="12,8"
+                Margin="0,0,0,12">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="FamiliesPanel" Orientation="Horizontal" Spacing="8"/>
+            </ScrollViewer>
+        </Border>
 
         <!-- Header con CAI y Cajero -->
         <Grid Grid.Row="1" Margin="0,0,0,16">
@@ -78,7 +82,7 @@
 
             <!-- ========== COLUMNA IZQUIERDA: PRODUCTOS ========== -->
             <Border Grid.Column="0"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource SBBlueSoft}"
                     CornerRadius="8"
                     Padding="16"
                     Margin="0,0,8,0">
@@ -90,7 +94,8 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Productos" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <TextBlock Grid.Row="0" Text="Productos" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"
+                               Foreground="{ThemeResource SBOnLightPrimary}"/>
 
                     <!-- Buscador de Productos -->
                     <TextBox
@@ -128,7 +133,7 @@
                                             <TextBlock Text="{Binding Price, Converter={StaticResource CurrencyConverter}}"
                                                        FontWeight="SemiBold"
                                                        TextAlignment="Center"
-                                                       Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                                                       Foreground="{ThemeResource SBBlueAccent}"/>
                                         </StackPanel>
                                     </Button>
                                 </DataTemplate>
@@ -150,7 +155,7 @@
 
             <!-- ========== COLUMNA CENTRAL: CARRITO ========== -->
             <Border Grid.Column="1"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource SBBlueSoft}"
                     CornerRadius="8"
                     Padding="16"
                     Margin="8,0,8,0">
@@ -161,7 +166,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Pestañas de ventas -->
+                    <!-- Pestanas de ventas -->
                     <ScrollViewer Grid.Row="0"
                                   HorizontalScrollBarVisibility="Auto"
                                   VerticalScrollBarVisibility="Disabled"
@@ -169,7 +174,8 @@
                         <StackPanel x:Name="SaleTabsPanel" Orientation="Horizontal" Spacing="4"/>
                     </ScrollViewer>
 
-                    <TextBlock Grid.Row="1" Text="Detalle de Venta" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <TextBlock Grid.Row="1" Text="Detalle de Venta" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"
+                               Foreground="{ThemeResource SBOnLightPrimary}"/>
 
                     <!-- Lista del Carrito -->
                     <ListView
@@ -177,18 +183,22 @@
                         Grid.Row="2"
                         SelectionMode="None">
                         <ListView.Header>
-                            <Grid Padding="8,8" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="4" Margin="0,0,0,8">
+                            <Grid Padding="8,8" Background="{ThemeResource SBPaymentCardBg}" CornerRadius="4" Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="100"/>
                                     <ColumnDefinition Width="100"/>
                                     <ColumnDefinition Width="50"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Producto" FontWeight="SemiBold" FontSize="12"/>
-                                <TextBlock Grid.Column="1" Text="Cantidad" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Center"/>
-                                <TextBlock Grid.Column="2" Text="P. Unit." FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right"/>
-                                <TextBlock Grid.Column="3" Text="Subtotal" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Column="0" Text="Producto" FontWeight="SemiBold" FontSize="12"
+                                           Foreground="{ThemeResource SBOnLightSecondary}"/>
+                                <TextBlock Grid.Column="1" Text="Cantidad" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Center"
+                                           Foreground="{ThemeResource SBOnLightSecondary}"/>
+                                <TextBlock Grid.Column="2" Text="P. Unit." FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right"
+                                           Foreground="{ThemeResource SBOnLightSecondary}"/>
+                                <TextBlock Grid.Column="3" Text="Subtotal" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right"
+                                           Foreground="{ThemeResource SBOnLightSecondary}"/>
                                 <TextBlock Grid.Column="4" Text="" FontSize="12"/>
                             </Grid>
                         </ListView.Header>
@@ -197,7 +207,7 @@
                                 <Grid Padding="8,4">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="120"/>
                                         <ColumnDefinition Width="100"/>
                                         <ColumnDefinition Width="100"/>
                                         <ColumnDefinition Width="50"/>
@@ -206,7 +216,8 @@
                                     <TextBlock Grid.Column="0"
                                                Text="{Binding Product.Name}"
                                                VerticalAlignment="Center"
-                                               TextTrimming="CharacterEllipsis"/>
+                                               TextTrimming="CharacterEllipsis"
+                                               Foreground="{ThemeResource SBOnLightPrimary}"/>
 
                                     <!-- Botones de Cantidad -->
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="2">
@@ -247,7 +258,8 @@
                                                Text="{Binding Subtotal, Converter={StaticResource CurrencyConverter}}"
                                                VerticalAlignment="Center"
                                                HorizontalAlignment="Right"
-                                               FontWeight="SemiBold"/>
+                                               FontWeight="SemiBold"
+                                               Foreground="{ThemeResource SBOnLightPrimary}"/>
 
                                     <Button Grid.Column="4"
                                             Content="&#xE711;"
@@ -256,7 +268,8 @@
                                             Tag="{Binding}"
                                             Width="32" Height="32"
                                             Padding="0"
-                                            Background="Transparent"/>
+                                            Background="Transparent"
+                                            Foreground="{ThemeResource SBOnLightSecondary}"/>
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -266,7 +279,7 @@
 
             <!-- ========== COLUMNA DERECHA: RESUMEN Y PAGO ========== -->
             <Border Grid.Column="2"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource SBBlueSoft}"
                     CornerRadius="8"
                     Padding="16"
                     Margin="8,0,0,0">
@@ -275,7 +288,8 @@
 
                         <!-- Seccion Cliente -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="Cliente" FontWeight="SemiBold"/>
+                            <TextBlock Text="Cliente" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource SBOnLightPrimary}"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -296,11 +310,12 @@
                             </Grid>
                         </StackPanel>
 
-                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+                        <Rectangle Height="1" Fill="{ThemeResource SBDividerOnLight}"/>
 
                         <!-- Seccion Descuentos (facil acceso) -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="Descuento" FontWeight="SemiBold"/>
+                            <TextBlock Text="Descuento" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource SBOnLightPrimary}"/>
 
                             <!-- Botones de Descuento Rapido -->
                             <ItemsControl x:Name="DiscountButtonsControl">
@@ -329,7 +344,7 @@
 
                             <!-- Descuento Seleccionado -->
                             <Grid x:Name="SelectedDiscountPanel" Visibility="Collapsed"
-                                  Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                  Background="{ThemeResource SBBlueAccent}"
                                   CornerRadius="4"
                                   Padding="12,8">
                                 <Grid.ColumnDefinitions>
@@ -349,7 +364,7 @@
                             </Grid>
                         </StackPanel>
 
-                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+                        <Rectangle Height="1" Fill="{ThemeResource SBDividerOnLight}"/>
 
                         <!-- Seccion Totales -->
                         <StackPanel Spacing="8">
@@ -358,15 +373,18 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Subtotal"/>
-                                <TextBlock x:Name="SubtotalText" Grid.Column="1" Text="L. 0.00" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="0" Text="Subtotal"
+                                           Foreground="{ThemeResource SBOnLightSecondary}"/>
+                                <TextBlock x:Name="SubtotalText" Grid.Column="1" Text="L. 0.00" FontWeight="SemiBold"
+                                           Foreground="{ThemeResource SBOnLightPrimary}"/>
                             </Grid>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Descuento"/>
+                                <TextBlock Grid.Column="0" Text="Descuento"
+                                           Foreground="{ThemeResource SBOnLightSecondary}"/>
                                 <TextBlock x:Name="DiscountAmountText" Grid.Column="1" Text="L. 0.00" Foreground="Green"/>
                             </Grid>
                             <Grid>
@@ -374,24 +392,29 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="Impuesto"/>
-                                <TextBlock x:Name="TaxAmountText" Grid.Column="1" Text="L. 0.00"/>
+                                <TextBlock Grid.Column="0" Text="Impuesto"
+                                           Foreground="{ThemeResource SBOnLightSecondary}"/>
+                                <TextBlock x:Name="TaxAmountText" Grid.Column="1" Text="L. 0.00"
+                                           Foreground="{ThemeResource SBOnLightPrimary}"/>
                             </Grid>
-                            <Grid Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="4" Padding="8">
+                            <Grid Background="{ThemeResource SBPaymentCardBg}" CornerRadius="4" Padding="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="TOTAL" FontSize="18" FontWeight="Bold"/>
-                                <TextBlock x:Name="TotalText" Grid.Column="1" Text="L. 0.00" FontSize="18" FontWeight="Bold" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                                <TextBlock Grid.Column="0" Text="TOTAL" FontSize="18" FontWeight="Bold"
+                                           Foreground="{ThemeResource SBOnLightPrimary}"/>
+                                <TextBlock x:Name="TotalText" Grid.Column="1" Text="L. 0.00" FontSize="18" FontWeight="Bold"
+                                           Foreground="{ThemeResource SBBlueAccent}"/>
                             </Grid>
                         </StackPanel>
 
-                        <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}"/>
+                        <Rectangle Height="1" Fill="{ThemeResource SBDividerOnLight}"/>
 
                         <!-- Seccion Pagos Multiples -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="Pagos" FontWeight="SemiBold"/>
+                            <TextBlock Text="Pagos" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource SBOnLightPrimary}"/>
 
                             <!-- Lista de Pagos Agregados -->
                             <ListView x:Name="PaymentsListView"
@@ -407,12 +430,14 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Grid.Column="0"
                                                        Text="{Binding PaymentType.Name}"
-                                                       VerticalAlignment="Center"/>
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{ThemeResource SBOnLightPrimary}"/>
                                             <TextBlock Grid.Column="1"
                                                        Text="{Binding Amount, Converter={StaticResource CurrencyConverter}}"
                                                        VerticalAlignment="Center"
                                                        HorizontalAlignment="Right"
-                                                       FontWeight="SemiBold"/>
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{ThemeResource SBOnLightPrimary}"/>
                                             <Button Grid.Column="2"
                                                     Content="&#xE711;"
                                                     FontFamily="Segoe MDL2 Assets"
@@ -450,7 +475,7 @@
                             </Grid>
 
                             <!-- Resumen de Pagos -->
-                            <Grid Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="4" Padding="8">
+                            <Grid Background="{ThemeResource SBPaymentCardBg}" CornerRadius="4" Padding="8">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
@@ -459,9 +484,11 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Total Pagado"/>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Total Pagado"
+                                           Foreground="{ThemeResource SBOnLightSecondary}"/>
                                 <TextBlock x:Name="TotalPaidText" Grid.Row="0" Grid.Column="1" Text="L. 0.00" FontWeight="SemiBold" Foreground="Green"/>
-                                <TextBlock x:Name="PendingLabelText" Grid.Row="1" Grid.Column="0" Text="Pendiente"/>
+                                <TextBlock x:Name="PendingLabelText" Grid.Row="1" Grid.Column="0" Text="Pendiente"
+                                           Foreground="{ThemeResource SBOnLightSecondary}"/>
                                 <TextBlock x:Name="PendingAmountText" Grid.Row="1" Grid.Column="1" Text="L. 0.00" FontWeight="SemiBold" Foreground="Red"/>
                             </Grid>
 
@@ -485,6 +512,32 @@
                                                HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
+                        </StackPanel>
+
+                        <Rectangle Height="1" Fill="{ThemeResource SBDividerOnLight}"/>
+
+                        <!-- Seccion Credito -->
+                        <StackPanel Spacing="8">
+                            <ToggleSwitch x:Name="CreditToggle"
+                                          Header="Factura al Credito"
+                                          Toggled="CreditToggle_Toggled"/>
+                            <StackPanel x:Name="CreditOptionsPanel" Visibility="Collapsed" Spacing="8">
+                                <TextBlock Text="Dias de Credito" FontWeight="SemiBold"
+                                           Foreground="{ThemeResource SBOnLightPrimary}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Content="15" Click="CreditDays_Click" Tag="15" MinWidth="50"/>
+                                    <Button Content="30" Click="CreditDays_Click" Tag="30" MinWidth="50"/>
+                                    <Button Content="60" Click="CreditDays_Click" Tag="60" MinWidth="50"/>
+                                    <Button Content="90" Click="CreditDays_Click" Tag="90" MinWidth="50"/>
+                                </StackPanel>
+                                <NumberBox x:Name="CreditDaysNumberBox"
+                                           Header="O ingrese dias:"
+                                           Minimum="1" Maximum="365"
+                                           SpinButtonPlacementMode="Inline"
+                                           ValueChanged="CreditDaysNumberBox_ValueChanged"/>
+                                <TextBlock x:Name="DueDatePreview" FontSize="12"
+                                           Foreground="{ThemeResource SBOnLightSecondary}"/>
+                            </StackPanel>
                         </StackPanel>
 
                         <!-- Boton Facturar -->

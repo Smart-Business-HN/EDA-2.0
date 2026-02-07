@@ -1,6 +1,7 @@
 using EDA.APPLICATION.Repository;
 using EDA.APPLICATION.Wrappers;
 using EDA.DOMAIN.Entities;
+using EDA.DOMAIN.Enums;
 using MediatR;
 
 namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
@@ -41,6 +42,10 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
         // Manejo de efectivo
         public double? CashReceived { get; set; }
         public double? ChangeGiven { get; set; }
+
+        // Credit
+        public bool IsCredit { get; set; }
+        public int? CreditDays { get; set; }
 
         // Items y Pagos
         public List<CreateInvoiceItemDto> Items { get; set; } = new();
@@ -144,7 +149,27 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
                 }
             }
 
-            // 4. Crear entidad Invoice
+            // 4. Calcular campos de credito
+            decimal totalPayments = request.Payments.Sum(p => p.Amount);
+            int status;
+            decimal outstandingAmount;
+            int? creditDays = null;
+            DateTime? dueDate = null;
+
+            if (request.IsCredit)
+            {
+                status = (int)InvoiceStatusEnum.Created;
+                outstandingAmount = request.Total - totalPayments;
+                creditDays = request.CreditDays;
+                dueDate = request.Date.AddDays(request.CreditDays ?? 30);
+            }
+            else
+            {
+                status = (int)InvoiceStatusEnum.Paid;
+                outstandingAmount = 0;
+            }
+
+            // 5. Crear entidad Invoice
             var invoice = new Invoice
             {
                 Date = request.Date,
@@ -163,7 +188,11 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
                 TaxesAt15Percent = taxesAt15,
                 TaxedAt18Percent = taxedAt18,
                 TaxesAt18Percent = taxesAt18,
-                Exempt = exempt
+                Exempt = exempt,
+                Status = status,
+                OutstandingAmount = outstandingAmount,
+                CreditDays = creditDays,
+                DueDate = dueDate
             };
 
             // 5. Agregar factura a la base de datos
