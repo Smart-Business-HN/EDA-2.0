@@ -32,6 +32,18 @@ namespace EDA.APPLICATION.DTOs
 
         // Últimas facturas
         public List<RecentInvoiceData> RecentInvoices { get; set; } = new();
+
+        // Cuentas por Cobrar - Totales
+        public decimal TotalReceivables { get; set; }
+        public int PendingInvoicesCount { get; set; }
+        public decimal OverdueAmount { get; set; }
+        public decimal DueNext7DaysAmount { get; set; }
+
+        // Aging Report
+        public List<AgingReportItem> AgingReport { get; set; } = new();
+
+        // Top Facturas Vencidas
+        public List<OverdueInvoiceItem> TopOverdueInvoices { get; set; } = new();
     }
 
     public class DailySalesData
@@ -90,5 +102,21 @@ namespace EDA.APPLICATION.DTOs
         public DateTime Date { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public decimal Total { get; set; }
+    }
+
+    public class AgingReportItem
+    {
+        public string Range { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public int Count { get; set; }
+    }
+
+    public class OverdueInvoiceItem
+    {
+        public string InvoiceNumber { get; set; } = string.Empty;
+        public string CustomerName { get; set; } = string.Empty;
+        public DateTime DueDate { get; set; }
+        public int DaysOverdue { get; set; }
+        public decimal OutstandingAmount { get; set; }
     }
 }

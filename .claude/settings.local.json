@@ -17,7 +17,11 @@
       "Bash(.xaml.cs \")",
       "Bash(dotnet add package:*)",
       "Bash(tree:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(move \"c:\\\\Users\\\\USER\\\\Documents\\\\Projects\\\\EDA-2.0\\\\EDA.MIGRATIONS\\\\Migrations\\\\20260207060224_AddProviderTable.cs\" \"c:\\\\Users\\\\USER\\\\Documents\\\\Projects\\\\EDA-2.0\\\\EDA.INFRAESTRUCTURE\\\\Migrations\"\" && move \"c:UsersUSERDocumentsProjectsEDA-2.0EDA.MIGRATIONSMigrations20260207060224_AddProviderTable.Designer.cs\" \"c:UsersUSERDocumentsProjectsEDA-2.0EDA.INFRAESTRUCTUREMigrations\"\")",
+      "Bash(del \"c:\\\\Users\\\\USER\\\\Documents\\\\Projects\\\\EDA-2.0\\\\EDA.MIGRATIONS\\\\Migrations\\\\20260207060224_AddProviderTable.cs\")",
+      "Bash(del \"c:\\\\Users\\\\USER\\\\Documents\\\\Projects\\\\EDA-2.0\\\\EDA.MIGRATIONS\\\\Migrations\\\\20260207060224_AddProviderTable.Designer.cs\")",
+      "Bash(cmd /c \"del \"\"c:\\\\Users\\\\USER\\\\Documents\\\\Projects\\\\EDA-2.0\\\\EDA.MIGRATIONS\\\\Migrations\\\\20260207060224_AddProviderTable.cs\"\" && del \"\"c:\\\\Users\\\\USER\\\\Documents\\\\Projects\\\\EDA-2.0\\\\EDA.MIGRATIONS\\\\Migrations\\\\20260207060224_AddProviderTable.Designer.cs\"\"\")"
     ]
   }
 }

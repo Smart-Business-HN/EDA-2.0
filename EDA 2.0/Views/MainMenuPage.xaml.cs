@@ -79,10 +79,15 @@ namespace EDA_2._0.Views
                 NavFamilias.Visibility = Visibility.Collapsed;
                 NavImpuestos.Visibility = Visibility.Collapsed;
                 NavDescuentos.Visibility = Visibility.Collapsed;
+                NavProveedores.Visibility = Visibility.Collapsed;
+                NavCuentasGastos.Visibility = Visibility.Collapsed;
+                HeaderCompras.Visibility = Visibility.Collapsed;
+                NavFacturasCompra.Visibility = Visibility.Collapsed;
                 NavFacturas.Visibility = Visibility.Collapsed;
                 NavTiposPago.Visibility = Visibility.Collapsed;
                 NavTurnos.Visibility = Visibility.Collapsed;
                 NavResumenVentas.Visibility = Visibility.Collapsed;
+                NavCuentasCobrar.Visibility = Visibility.Collapsed;
                 NavReportes.Visibility = Visibility.Collapsed;
                 NavCierreMes.Visibility = Visibility.Collapsed;
                 NavCAIs.Visibility = Visibility.Collapsed;
@@ -166,6 +171,18 @@ namespace EDA_2._0.Views
                         break;
                     case "cierre_mes":
                         ContentFrame.Navigate(typeof(MonthlyClosingReportPage));
+                        break;
+                    case "cuentascobrar":
+                        ContentFrame.Navigate(typeof(ReceivablesPage));
+                        break;
+                    case "proveedores":
+                        ContentFrame.Navigate(typeof(ProvidersPage));
+                        break;
+                    case "cuentasgastos":
+                        ContentFrame.Navigate(typeof(ExpenseAccountsPage));
+                        break;
+                    case "facturascompra":
+                        ContentFrame.Navigate(typeof(PurchaseBillsPage));
                         break;
                 }
             }
@@ -387,6 +404,44 @@ namespace EDA_2._0.Views
         {
             ContentFrame.Navigate(typeof(InvoicesPage));
             NavView.SelectedItem = NavFacturas;
+        }
+
+        public void NavigateToReceivables()
+        {
+            ContentFrame.Navigate(typeof(ReceivablesPage));
+            NavView.SelectedItem = NavCuentasCobrar;
+        }
+
+        public void NavigateToCustomerReceivablesDetail(int customerId)
+        {
+            var detailPage = new CustomerReceivablesDetailPage();
+            detailPage.SetCustomerId(customerId);
+            ContentFrame.Navigate(typeof(CustomerReceivablesDetailPage), customerId);
+            ContentFrame.Content = detailPage;
+        }
+
+        public void NavigateToPurchaseBills()
+        {
+            ContentFrame.Navigate(typeof(PurchaseBillsPage));
+            NavView.SelectedItem = NavFacturasCompra;
+        }
+
+        public void NavigateToPurchaseBillDetail(int purchaseBillId)
+        {
+            var detailPage = new PurchaseBillDetailPage();
+            detailPage.SetPurchaseBillId(purchaseBillId);
+            ContentFrame.Navigate(typeof(PurchaseBillDetailPage), purchaseBillId);
+            ContentFrame.Content = detailPage;
+        }
+
+        public void NavigateToPurchaseBillEdit(int purchaseBillId)
+        {
+            // Navigate to PurchaseBillsPage which will handle the edit
+            var page = new PurchaseBillsPage();
+            page.SetEditPurchaseBillId(purchaseBillId);
+            ContentFrame.Navigate(typeof(PurchaseBillsPage), purchaseBillId);
+            ContentFrame.Content = page;
+            NavView.SelectedItem = NavFacturasCompra;
         }
     }
 }

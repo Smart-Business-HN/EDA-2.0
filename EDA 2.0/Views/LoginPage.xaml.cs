@@ -8,6 +8,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace EDA_2._0.Views
@@ -37,7 +39,7 @@ namespace EDA_2._0.Views
 
         private async Task AttemptLogin()
         {
-            ErrorMessage.Visibility = Visibility.Collapsed;
+            ErrorBorder.Visibility = Visibility.Collapsed;
             LoginButton.IsEnabled = false;
             LoadingRing.IsActive = true;
 
@@ -83,7 +85,11 @@ namespace EDA_2._0.Views
             }
             catch (EDA.APPLICATION.Exceptions.ValidationException vex)
             {
-                ShowError(string.Join("\n", vex.Errors));
+                // Limpiar mensajes de validacion para mostrar solo el texto amigable
+                var cleanErrors = vex.Errors
+                    .Select(e => CleanValidationMessage(e))
+                    .Where(e => !string.IsNullOrWhiteSpace(e));
+                ShowError(string.Join("\n", cleanErrors));
             }
             catch (Exception ex)
             {
@@ -182,7 +188,22 @@ namespace EDA_2._0.Views
         private void ShowError(string message)
         {
             ErrorMessage.Text = message;
-            ErrorMessage.Visibility = Visibility.Visible;
+            ErrorBorder.Visibility = Visibility.Visible;
+        }
+
+        private string CleanValidationMessage(string rawMessage)
+        {
+            if (string.IsNullOrWhiteSpace(rawMessage))
+                return string.Empty;
+
+            // Remover prefijos como "-- PropertyName: " o "PropertyName: "
+            var cleaned = Regex.Replace(rawMessage, @"^--\s*\w+:\s*", "");
+            cleaned = Regex.Replace(cleaned, @"^\w+:\s*", "");
+
+            // Remover sufijos como "Severity: Error" o "Severity: Warning"
+            cleaned = Regex.Replace(cleaned, @"\s*Severity:\s*\w+\.?\s*$", "", RegexOptions.IgnoreCase);
+
+            return cleaned.Trim();
         }
     }
 }

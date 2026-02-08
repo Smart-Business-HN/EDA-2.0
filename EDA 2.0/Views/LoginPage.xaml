@@ -9,50 +9,218 @@
     mc:Ignorable="d"
     Background="Transparent">
 
-    <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="400">
-        <StackPanel Spacing="16">
-            <TextBlock
-                Text="EDA 2.0 - POS"
-                FontSize="32"
-                FontWeight="Bold"
-                HorizontalAlignment="Center"
-                Margin="0,0,0,24"/>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="480"/>
+        </Grid.ColumnDefinitions>
 
-            <TextBlock
-                Text="Iniciar Sesion"
-                FontSize="20"
-                HorizontalAlignment="Center"
-                Margin="0,0,0,16"/>
+        <!-- Left Side: Branding Area -->
+        <Grid Grid.Column="0">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#1a1a2e" Offset="0"/>
+                    <GradientStop Color="#16213e" Offset="0.5"/>
+                    <GradientStop Color="#0f3460" Offset="1"/>
+                </LinearGradientBrush>
+            </Grid.Background>
 
-            <TextBox
-                x:Name="UsernameTextBox"
-                Header="Usuario"
-                PlaceholderText="Ingrese su usuario"/>
+            <!-- Decorative circles -->
+            <Ellipse Width="400" Height="400" Opacity="0.03" Fill="White"
+                     HorizontalAlignment="Left" VerticalAlignment="Top"
+                     Margin="-100,-100,0,0"/>
+            <Ellipse Width="300" Height="300" Opacity="0.05" Fill="White"
+                     HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                     Margin="0,0,-50,-50"/>
+            <Ellipse Width="200" Height="200" Opacity="0.04" Fill="White"
+                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                     Margin="100,200,0,0"/>
 
-            <PasswordBox
-                x:Name="PasswordBox"
-                Header="Contrasena"
-                PlaceholderText="Ingrese su contrasena"
-                KeyDown="PasswordBox_KeyDown"/>
+            <!-- Branding Content -->
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="24">
+                <!-- Logo Icon -->
+                <Border Width="120" Height="120" CornerRadius="24"
+                        HorizontalAlignment="Center">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#00d4ff" Offset="0"/>
+                            <GradientStop Color="#0099cc" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <TextBlock Text="E" FontSize="72" FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Border>
 
-            <TextBlock
-                x:Name="ErrorMessage"
-                Foreground="Red"
-                TextWrapping="Wrap"
-                Visibility="Collapsed"/>
+                <!-- Brand Name -->
+                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                    <TextBlock Text="EDA"
+                               FontSize="56"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"
+                               CharacterSpacing="150"/>
+                    <TextBlock Text="Sistema de Punto de Venta"
+                               FontSize="16"
+                               Foreground="#8899aa"
+                               HorizontalAlignment="Center"
+                               FontWeight="Light"/>
+                </StackPanel>
 
-            <Button
-                x:Name="LoginButton"
-                Content="Ingresar"
-                HorizontalAlignment="Stretch"
-                Style="{StaticResource AccentButtonStyle}"
-                Click="LoginButton_Click"
-                Margin="0,8,0,0"/>
+                <!-- Tagline -->
+                <Border Margin="0,32,0,0" Padding="24,12" CornerRadius="8"
+                        HorizontalAlignment="Center">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#00d4ff" Offset="0"/>
+                            <GradientStop Color="#0099cc" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <FontIcon Glyph="&#xE8FB;" FontSize="20" Foreground="White"/>
+                        <TextBlock Text="Facturacion rapida, simple y segura"
+                                   FontSize="14"
+                                   Foreground="White"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
 
-            <ProgressRing
-                x:Name="LoadingRing"
-                IsActive="False"
-                HorizontalAlignment="Center"/>
-        </StackPanel>
+                <!-- Features -->
+                <StackPanel Margin="0,24,0,0" Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                        <FontIcon Glyph="&#xE73E;" FontSize="16" Foreground="#27ae60"/>
+                        <TextBlock Text="Gestion de inventario" Foreground="#8899aa" FontSize="13"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                        <FontIcon Glyph="&#xE73E;" FontSize="16" Foreground="#27ae60"/>
+                        <TextBlock Text="Reportes en tiempo real" Foreground="#8899aa" FontSize="13"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center">
+                        <FontIcon Glyph="&#xE73E;" FontSize="16" Foreground="#27ae60"/>
+                        <TextBlock Text="Facturacion electronica SAR" Foreground="#8899aa" FontSize="13"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Footer -->
+            <TextBlock Text="v2.0.0"
+                       FontSize="12"
+                       Foreground="#556677"
+                       HorizontalAlignment="Left"
+                       VerticalAlignment="Bottom"
+                       Margin="24,0,0,24"/>
+        </Grid>
+
+        <!-- Right Side: Login Form -->
+        <Grid Grid.Column="1" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Width="320" Spacing="8">
+
+                <!-- Welcome Text -->
+                <TextBlock Text="Bienvenido"
+                           FontSize="32"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,4"/>
+                <TextBlock Text="Ingresa tus credenciales para continuar"
+                           FontSize="14"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           Margin="0,0,0,32"/>
+
+                <!-- Username Field -->
+                <TextBlock Text="Usuario" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,6"/>
+                <TextBox x:Name="UsernameTextBox"
+                         PlaceholderText="Ingresa tu nombre de usuario"
+                         Padding="12"
+                         CornerRadius="8"/>
+
+                <!-- Password Field -->
+                <TextBlock Text="Contrasena" FontWeight="SemiBold" FontSize="13" Margin="0,16,0,6"/>
+                <PasswordBox x:Name="PasswordBox"
+                             PlaceholderText="Ingresa tu contrasena"
+                             Padding="12"
+                             CornerRadius="8"
+                             KeyDown="PasswordBox_KeyDown"/>
+
+                <!-- Error Message -->
+                <Border x:Name="ErrorBorder"
+                        Background="#fdeded"
+                        CornerRadius="8"
+                        Padding="12"
+                        Margin="0,8,0,0"
+                        Visibility="Collapsed">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xEA39;" FontSize="16" Foreground="#e74c3c"
+                                  VerticalAlignment="Top" Margin="0,2,8,0"/>
+                        <TextBlock x:Name="ErrorMessage"
+                                   Grid.Column="1"
+                                   Foreground="#c0392b"
+                                   TextWrapping="Wrap"
+                                   FontSize="13"/>
+                    </Grid>
+                </Border>
+
+                <!-- Login Button -->
+                <Button x:Name="LoginButton"
+                        HorizontalAlignment="Stretch"
+                        Click="LoginButton_Click"
+                        Margin="0,24,0,0"
+                        Padding="0,14"
+                        CornerRadius="8">
+                    <Button.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#00d4ff" Offset="0"/>
+                            <GradientStop Color="#0099cc" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Button.Background>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="Iniciar Sesion"
+                                   FontWeight="SemiBold"
+                                   FontSize="15"
+                                   Foreground="White"/>
+                        <FontIcon Glyph="&#xE72A;" FontSize="14" Foreground="White"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Loading Ring -->
+                <ProgressRing x:Name="LoadingRing"
+                              IsActive="False"
+                              HorizontalAlignment="Center"
+                              Margin="0,16,0,0"/>
+
+                <!-- Divider -->
+                <Grid Margin="0,32,0,0">
+                    <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                            VerticalAlignment="Center"/>
+                </Grid>
+
+                <!-- Footer Info -->
+                <StackPanel Margin="0,24,0,0" HorizontalAlignment="Center">
+                    <TextBlock Text="Soporte Tecnico"
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="support@eda-pos.com"
+                               FontSize="12"
+                               Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                               HorizontalAlignment="Center"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Copyright -->
+            <TextBlock HorizontalAlignment="Center"
+                       VerticalAlignment="Bottom"
+                       Margin="0,0,0,24"
+                       FontSize="11"
+                       Foreground="{ThemeResource TextFillColorTertiaryBrush}">
+                <Run Text="© 2024 EDA Systems. Todos los derechos reservados."/>
+            </TextBlock>
+        </Grid>
     </Grid>
 </Page>

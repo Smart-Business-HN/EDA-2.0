@@ -7,7 +7,9 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using SkiaSharp;
+using Windows.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -98,6 +100,29 @@ namespace EDA_2._0.Views
 
             // Lista de últimas facturas
             UpdateRecentInvoices(data.RecentInvoices);
+
+            // ========== CUENTAS POR COBRAR ==========
+            // Actualizar tarjetas
+            TotalReceivablesText.Text = $"L {data.TotalReceivables:N2}";
+            PendingInvoicesCountText.Text = $"{data.PendingInvoicesCount} facturas";
+            OverdueAmountText.Text = $"L {data.OverdueAmount:N2}";
+            DueNext7DaysText.Text = $"L {data.DueNext7DaysAmount:N2}";
+
+            // Calcular % cartera vencida
+            var overduePercent = data.TotalReceivables > 0
+                ? (data.OverdueAmount / data.TotalReceivables) * 100
+                : 0;
+            OverduePercentText.Text = $"{overduePercent:N1}%";
+            OverduePercentText.Foreground = new SolidColorBrush(
+                overduePercent > 30 ? Color.FromArgb(255, 231, 76, 60) :    // Rojo si > 30%
+                overduePercent > 15 ? Color.FromArgb(255, 243, 156, 18) :   // Amarillo si > 15%
+                Color.FromArgb(255, 39, 174, 96));                           // Verde si <= 15%
+
+            // Gráfico de antigüedad
+            UpdateAgingChart(data.AgingReport);
+
+            // Lista de facturas vencidas
+            UpdateOverdueInvoices(data.TopOverdueInvoices);
         }
 
         private void UpdateLast7DaysChart(List<DailySalesData> data)
@@ -351,6 +376,72 @@ namespace EDA_2._0.Views
             }).ToList();
 
             RecentInvoicesControl.ItemsSource = items;
+        }
+
+        private void UpdateAgingChart(List<AgingReportItem> data)
+        {
+            if (data == null || data.Count == 0)
+            {
+                AgingChart.Series = Array.Empty<ISeries>();
+                return;
+            }
+
+            var values = data.Select(a => (double)a.Amount).ToArray();
+            var labels = data.Select(a => a.Range).ToArray();
+
+            // Colores degradados de azul a rojo según antigüedad
+            var colors = new SKColor[]
+            {
+                new SKColor(52, 152, 219),   // Azul - Corriente
+                new SKColor(241, 196, 15),   // Amarillo - 31-60
+                new SKColor(230, 126, 34),   // Naranja - 61-90
+                new SKColor(231, 76, 60)     // Rojo - >90
+            };
+
+            AgingChart.Series = new ISeries[]
+            {
+                new ColumnSeries<double>
+                {
+                    Values = values,
+                    Fill = new SolidColorPaint(SKColors.CornflowerBlue),
+                    MaxBarWidth = 50
+                }
+            };
+
+            AgingChart.XAxes = new Axis[]
+            {
+                new Axis
+                {
+                    Labels = labels,
+                    LabelsRotation = 0
+                }
+            };
+
+            AgingChart.YAxes = new Axis[]
+            {
+                new Axis
+                {
+                    Labeler = value => $"L {value:N0}"
+                }
+            };
+        }
+
+        private void UpdateOverdueInvoices(List<OverdueInvoiceItem> data)
+        {
+            if (data == null || data.Count == 0)
+            {
+                OverdueInvoicesControl.ItemsSource = null;
+                return;
+            }
+
+            var items = data.Select(i => new
+            {
+                i.CustomerName,
+                i.DaysOverdue,
+                OutstandingFormatted = $"L {i.OutstandingAmount:N2}"
+            }).ToList();
+
+            OverdueInvoicesControl.ItemsSource = items;
         }
 
         private static string TruncateProductName(string name, int maxLength)

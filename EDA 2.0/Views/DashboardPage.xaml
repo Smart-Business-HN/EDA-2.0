@@ -123,6 +123,126 @@
                     </Border>
                 </Grid>
 
+                <!-- ========== CUENTAS POR COBRAR ========== -->
+                <TextBlock Text="CUENTAS POR COBRAR" FontWeight="SemiBold" FontSize="16" Margin="0,8,0,0"/>
+
+                <!-- Cards de Cuentas por Cobrar -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Total por Cobrar -->
+                    <Border Grid.Column="0" Margin="0,0,8,0" Padding="16" CornerRadius="8"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Total por Cobrar" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock x:Name="TotalReceivablesText" Text="L 0.00" FontSize="24" FontWeight="SemiBold" Foreground="#3498db" Margin="0,4,0,0"/>
+                            <TextBlock x:Name="PendingInvoicesCountText" Text="0 facturas" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Cartera Vencida -->
+                    <Border Grid.Column="1" Margin="8,0,8,0" Padding="16" CornerRadius="8"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Cartera Vencida" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock x:Name="OverdueAmountText" Text="L 0.00" FontSize="24" FontWeight="SemiBold" Foreground="#e74c3c" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Por Vencer (7 días) -->
+                    <Border Grid.Column="2" Margin="8,0,8,0" Padding="16" CornerRadius="8"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Por Vencer (7 dias)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock x:Name="DueNext7DaysText" Text="L 0.00" FontSize="24" FontWeight="SemiBold" Foreground="#f39c12" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- % Cartera Vencida -->
+                    <Border Grid.Column="3" Margin="8,0,0,0" Padding="16" CornerRadius="8"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="% Cartera Vencida" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock x:Name="OverduePercentText" Text="0%" FontSize="24" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Gráficos de Cuentas por Cobrar -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Aging Report (Barras) -->
+                    <Border Grid.Column="0" Margin="0,0,12,0" Padding="16" CornerRadius="8"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Antiguedad de Cartera" FontSize="14" FontWeight="SemiBold"/>
+                            <lvc:CartesianChart
+                                x:Name="AgingChart"
+                                Height="200"
+                                Margin="0,12,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Top Facturas Vencidas -->
+                    <Border Grid.Column="1" Padding="16" CornerRadius="8"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Top 10 Facturas Vencidas" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="60"/>
+                                    <ColumnDefinition Width="80"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Cliente" FontWeight="SemiBold" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Grid.Column="1" Text="Dias" FontWeight="SemiBold" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="Saldo" FontWeight="SemiBold" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,6"/>
+
+                            <ItemsControl x:Name="OverdueInvoicesControl" MaxHeight="160">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="80"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding CustomerName}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding DaysOverdue}" FontSize="11" Foreground="#e74c3c" HorizontalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding OutstandingFormatted}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
                 <!-- Gráficos principales -->
                 <Grid>
                     <Grid.ColumnDefinitions>

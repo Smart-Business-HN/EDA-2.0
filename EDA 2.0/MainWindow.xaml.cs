@@ -41,5 +41,45 @@ namespace EDA_2._0
                 mainMenuPage.NavigateToInvoices();
             }
         }
+
+        public void NavigateToReceivables()
+        {
+            if (ContentFrame.Content is MainMenuPage mainMenuPage)
+            {
+                mainMenuPage.NavigateToReceivables();
+            }
+        }
+
+        public void NavigateToCustomerReceivablesDetail(int customerId)
+        {
+            if (ContentFrame.Content is MainMenuPage mainMenuPage)
+            {
+                mainMenuPage.NavigateToCustomerReceivablesDetail(customerId);
+            }
+        }
+
+        public void NavigateToPurchaseBills()
+        {
+            if (ContentFrame.Content is MainMenuPage mainMenuPage)
+            {
+                mainMenuPage.NavigateToPurchaseBills();
+            }
+        }
+
+        public void NavigateToPurchaseBillDetail(int purchaseBillId)
+        {
+            if (ContentFrame.Content is MainMenuPage mainMenuPage)
+            {
+                mainMenuPage.NavigateToPurchaseBillDetail(purchaseBillId);
+            }
+        }
+
+        public void NavigateToPurchaseBillEdit(int purchaseBillId)
+        {
+            if (ContentFrame.Content is MainMenuPage mainMenuPage)
+            {
+                mainMenuPage.NavigateToPurchaseBillEdit(purchaseBillId);
+            }
+        }
     }
 }

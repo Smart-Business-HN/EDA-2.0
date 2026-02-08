@@ -33,6 +33,7 @@ namespace EDA.INFRAESTRUCTURE
             services.AddTransient<IInvoicePdfService, InvoicePdfService>();
             services.AddTransient<IShiftReportPdfService, ShiftReportPdfService>();
             services.AddTransient<IReportPdfService, ReportPdfService>();
+            services.AddTransient<ICustomerStatementPdfService, CustomerStatementPdfService>();
 
             // Servicio de actualizaciones
             services.AddSingleton<IUpdateCheckerService, UpdateCheckerService>();

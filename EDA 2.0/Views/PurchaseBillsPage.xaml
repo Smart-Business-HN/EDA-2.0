@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="EDA_2._0.Views.PurchaseBillsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EDA_2._0.Views"
+    xmlns:converters="using:EDA_2._0.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent"
+    Loaded="Page_Loaded">
+
+    <Page.Resources>
+        <converters:DateConverter x:Key="DateFormatConverter"/>
+        <converters:CurrencyConverter x:Key="CurrencyConverter"/>
+        <converters:PurchaseBillStatusConverter x:Key="StatusConverter"/>
+    </Page.Resources>
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock
+                    Text="Facturas de Compra"
+                    FontSize="28"
+                    FontWeight="SemiBold"/>
+                <TextBlock
+                    Text="Gestionar las facturas de proveedores"
+                    FontSize="14"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Margin="0,4,0,0"/>
+            </StackPanel>
+            <Button Grid.Column="1"
+                    x:Name="NewPurchaseBillButton"
+                    Click="NewPurchaseBillButton_Click"
+                    Style="{StaticResource AccentButtonStyle}"
+                    VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE710;" FontSize="14"/>
+                    <TextBlock Text="Nueva Factura"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- Filters -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- First Row of Filters -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="250"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox
+                    x:Name="SearchTextBox"
+                    Grid.Column="0"
+                    PlaceholderText="Buscar..."
+                    KeyDown="SearchTextBox_KeyDown"/>
+
+                <DatePicker
+                    x:Name="FromDatePicker"
+                    Grid.Column="1"
+                    Header="Desde"
+                    Margin="12,0,0,0"/>
+
+                <DatePicker
+                    x:Name="ToDatePicker"
+                    Grid.Column="2"
+                    Header="Hasta"
+                    Margin="12,0,0,0"/>
+
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Bottom">
+                    <Button
+                        x:Name="SearchButton"
+                        Content="Buscar"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Click="SearchButton_Click"/>
+                    <Button
+                        x:Name="ClearButton"
+                        Content="Limpiar"
+                        Click="ClearButton_Click"
+                        Margin="8,0,0,0"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Second Row of Filters -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="200"/>
+                    <ColumnDefinition Width="*" MaxWidth="200"/>
+                    <ColumnDefinition Width="*" MaxWidth="150"/>
+                </Grid.ColumnDefinitions>
+
+                <ComboBox
+                    x:Name="ProviderComboBox"
+                    Grid.Column="0"
+                    Header="Proveedor"
+                    PlaceholderText="Todos"
+                    DisplayMemberPath="Name"
+                    Margin="0,0,8,0"
+                    HorizontalAlignment="Stretch"/>
+
+                <ComboBox
+                    x:Name="ExpenseAccountComboBox"
+                    Grid.Column="1"
+                    Header="Cuenta de Gastos"
+                    PlaceholderText="Todas"
+                    DisplayMemberPath="Name"
+                    Margin="8,0,8,0"
+                    HorizontalAlignment="Stretch"/>
+
+                <ComboBox
+                    x:Name="StatusComboBox"
+                    Grid.Column="2"
+                    Header="Estado"
+                    PlaceholderText="Todos"
+                    Margin="8,0,0,0"
+                    HorizontalAlignment="Stretch">
+                    <ComboBoxItem Content="Todos" Tag=""/>
+                    <ComboBoxItem Content="Creada" Tag="1"/>
+                    <ComboBoxItem Content="Pagada" Tag="2"/>
+                    <ComboBoxItem Content="Anulada" Tag="3"/>
+                </ComboBox>
+            </Grid>
+        </Grid>
+
+        <!-- Purchase Bills List -->
+        <ListView
+            x:Name="PurchaseBillsListView"
+            Grid.Row="2"
+            SelectionMode="None">
+            <ListView.Header>
+                <Grid Padding="12,8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="90"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="Auto" MinWidth="80"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Codigo" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Text="Proveedor" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="2" Text="# Factura" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="3" Text="Fecha" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="4" Text="Total" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Column="5" Text="Pendiente" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                    <TextBlock Grid.Column="6" Text="Estado" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="7" Text="Acciones" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                </Grid>
+            </ListView.Header>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="12,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="Auto" MinWidth="80"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding PurchaseBillCode}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Provider.Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="2" Text="{Binding InvoiceNumber}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="3" Text="{Binding InvoiceDate, Converter={StaticResource DateFormatConverter}}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="4" Text="{Binding Total, Converter={StaticResource CurrencyConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="5" Text="{Binding OutstandingAmount, Converter={StaticResource CurrencyConverter}}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="6" Text="{Binding StatusId, Converter={StaticResource StatusConverter}}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="7" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <Button
+                                Content="Ver"
+                                Click="ViewDetailButton_Click"
+                                Tag="{Binding}"/>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Footer: Pagination + Loading -->
+        <Grid Grid.Row="3" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Pagination -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                <Button
+                    x:Name="PreviousPageButton"
+                    Content="&lt; Anterior"
+                    Click="PreviousPageButton_Click"
+                    IsEnabled="False"/>
+                <TextBlock
+                    x:Name="PageInfoText"
+                    Text="Pagina 1 de 1"
+                    VerticalAlignment="Center"
+                    Margin="8,0"/>
+                <Button
+                    x:Name="NextPageButton"
+                    Content="Siguiente &gt;"
+                    Click="NextPageButton_Click"
+                    IsEnabled="False"/>
+            </StackPanel>
+
+            <!-- Loading -->
+            <ProgressRing
+                x:Name="LoadingRing"
+                Grid.Column="1"
+                IsActive="False"
+                Width="24"
+                Height="24"/>
+        </Grid>
+    </Grid>
+</Page>

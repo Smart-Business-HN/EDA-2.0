@@ -200,6 +200,76 @@ namespace EDA.INFRAESTRUCTURE.Migrations
                         });
                 });
 
+            modelBuilder.Entity("EDA.DOMAIN.Entities.ExpenseAccount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ExpenseAccounts");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Alquiler"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Servicios P�blicos"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Sueldos y Salarios"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Materiales y Suministros"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Publicidad y Marketing"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Gastos de Viaje"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Gastos de Oficina"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Mantenimiento y Reparaciones"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Gastos Financieros"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Otros Gastos"
+                        });
+                });
+
             modelBuilder.Entity("EDA.DOMAIN.Entities.Family", b =>
                 {
                     b.Property<int>("Id")
@@ -445,6 +515,211 @@ namespace EDA.INFRAESTRUCTURE.Migrations
                     b.HasIndex("TaxId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("EDA.DOMAIN.Entities.Provider", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ContactPerson")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ContactPhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ModificatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ModificationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("RTN")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("TypeProviderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("WebsiteUrl")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Providers");
+                });
+
+            modelBuilder.Entity("EDA.DOMAIN.Entities.PurchaseBill", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Cai")
+                        .IsRequired()
+                        .HasMaxLength(19)
+                        .HasColumnType("nvarchar(19)");
+
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreditDays")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Exempt")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Exonerated")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ExpenseAccountId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("InvoiceDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("OutstandingAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ProviderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PurchaseBillCode")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<int?>("PurchaseOrderOriginId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TaxedAt15Percent")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TaxedAt18Percent")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Taxes15Percent")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Taxes18Percent")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpenseAccountId");
+
+                    b.HasIndex("ProviderId");
+
+                    b.ToTable("PurchaseBills");
+                });
+
+            modelBuilder.Entity("EDA.DOMAIN.Entities.PurchaseBillPayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PaymentTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PurchaseBillId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("PurchaseBillId1")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentTypeId");
+
+                    b.HasIndex("PurchaseBillId");
+
+                    b.HasIndex("PurchaseBillId1");
+
+                    b.ToTable("PurchaseBillPayments");
                 });
 
             modelBuilder.Entity("EDA.DOMAIN.Entities.Role", b =>
@@ -755,6 +1030,48 @@ namespace EDA.INFRAESTRUCTURE.Migrations
                     b.Navigation("Tax");
                 });
 
+            modelBuilder.Entity("EDA.DOMAIN.Entities.PurchaseBill", b =>
+                {
+                    b.HasOne("EDA.DOMAIN.Entities.ExpenseAccount", "ExpenseAccount")
+                        .WithMany()
+                        .HasForeignKey("ExpenseAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EDA.DOMAIN.Entities.Provider", "Provider")
+                        .WithMany()
+                        .HasForeignKey("ProviderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExpenseAccount");
+
+                    b.Navigation("Provider");
+                });
+
+            modelBuilder.Entity("EDA.DOMAIN.Entities.PurchaseBillPayment", b =>
+                {
+                    b.HasOne("EDA.DOMAIN.Entities.PaymentType", "PaymentType")
+                        .WithMany()
+                        .HasForeignKey("PaymentTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EDA.DOMAIN.Entities.PurchaseBill", "PurchaseBill")
+                        .WithMany()
+                        .HasForeignKey("PurchaseBillId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EDA.DOMAIN.Entities.PurchaseBill", null)
+                        .WithMany("PurchaseBillPayments")
+                        .HasForeignKey("PurchaseBillId1");
+
+                    b.Navigation("PaymentType");
+
+                    b.Navigation("PurchaseBill");
+                });
+
             modelBuilder.Entity("EDA.DOMAIN.Entities.Shift", b =>
                 {
                     b.HasOne("EDA.DOMAIN.Entities.User", "User")
@@ -814,6 +1131,11 @@ namespace EDA.INFRAESTRUCTURE.Migrations
                     b.Navigation("InvoicePayments");
 
                     b.Navigation("SoldProducts");
+                });
+
+            modelBuilder.Entity("EDA.DOMAIN.Entities.PurchaseBill", b =>
+                {
+                    b.Navigation("PurchaseBillPayments");
                 });
 #pragma warning restore 612, 618
         }

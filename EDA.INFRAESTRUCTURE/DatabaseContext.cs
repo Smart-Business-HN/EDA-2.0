@@ -24,7 +24,10 @@ namespace EDA.INFRAESTRUCTURE
         public DbSet<InvoicePayment> InvoicePayments { get; set; }
         public DbSet<PendingSale> PendingSales { get; set; }
         public DbSet<Shift> Shifts { get; set; }
-
+        public DbSet<Provider> Providers { get; set; }
+        public DbSet<ExpenseAccount> ExpenseAccounts { get; set; }
+        public DbSet<PurchaseBill> PurchaseBills { get; set; }
+        public DbSet<PurchaseBillPayment> PurchaseBillPayments { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -235,6 +238,68 @@ namespace EDA.INFRAESTRUCTURE
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
+            // Provider
+            modelBuilder.Entity<Provider>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.RTN).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.PhoneNumber).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.ContactPerson).HasMaxLength(100);
+                entity.Property(e => e.ContactPhoneNumber).HasMaxLength(20);
+                entity.Property(e => e.ContactEmail).HasMaxLength(100);
+                entity.Property(e => e.Address).HasMaxLength(200);
+                entity.Property(e => e.WebsiteUrl).HasMaxLength(200);
+                entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.ModificatedBy).HasMaxLength(100);
+            });
+            // ExpenseAccount
+            modelBuilder.Entity<ExpenseAccount>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            });
+            // PurchaseBill
+            modelBuilder.Entity<PurchaseBill>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.PurchaseBillCode).IsRequired().HasMaxLength(8);
+                entity.Property(e => e.InvoiceNumber).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Cai).IsRequired().HasMaxLength(19);
+                entity.Property(e => e.Exempt).HasPrecision(18, 2);
+                entity.Property(e => e.Exonerated).HasPrecision(18, 2);
+                entity.Property(e => e.TaxedAt15Percent).HasPrecision(18, 2);
+                entity.Property(e => e.TaxedAt18Percent).HasPrecision(18, 2);
+                entity.Property(e => e.Taxes15Percent).HasPrecision(18, 2);
+                entity.Property(e => e.Taxes18Percent).HasPrecision(18, 2);
+                entity.Property(e => e.Total).HasPrecision(18, 2);
+                entity.Property(e => e.OutstandingAmount).HasPrecision(18, 2);
+                entity.HasOne(e => e.Provider)
+                      .WithMany()
+                      .HasForeignKey(e => e.ProviderId)
+                      .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.ExpenseAccount)
+                      .WithMany()
+                      .HasForeignKey(e => e.ExpenseAccountId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+            // PurchaseBillPayment
+            modelBuilder.Entity<PurchaseBillPayment>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Amount).HasPrecision(18, 2);
+                entity.Property(e => e.CreatedBy).IsRequired().HasMaxLength(100);
+                entity.HasOne(e => e.PaymentType)
+                      .WithMany()
+                      .HasForeignKey(e => e.PaymentTypeId)
+                      .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.PurchaseBill)
+                      .WithMany()
+                      .HasForeignKey(e => e.PurchaseBillId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
             // Seed Data
             SeedData(modelBuilder);
         }
@@ -275,6 +340,19 @@ namespace EDA.INFRAESTRUCTURE
                     Password = "WakeUpNe0",
                     RoleId = 1
                 }
+            );
+            //Default Expense Accounts
+            modelBuilder.Entity<ExpenseAccount>().HasData(
+                new ExpenseAccount { Id = 1, Name = "Alquiler" },
+                new ExpenseAccount { Id = 2, Name = "Servicios P�blicos" },
+                new ExpenseAccount { Id = 3, Name = "Sueldos y Salarios" },
+                new ExpenseAccount { Id = 4, Name = "Materiales y Suministros" },
+                new ExpenseAccount { Id = 5, Name = "Publicidad y Marketing" },
+                new ExpenseAccount { Id = 6, Name = "Gastos de Viaje" },
+                new ExpenseAccount { Id = 7, Name = "Gastos de Oficina" },
+                new ExpenseAccount { Id = 8, Name = "Mantenimiento y Reparaciones" },
+                new ExpenseAccount { Id = 9, Name = "Gastos Financieros" },
+                new ExpenseAccount { Id = 10, Name = "Otros Gastos" }
             );
         }
     }

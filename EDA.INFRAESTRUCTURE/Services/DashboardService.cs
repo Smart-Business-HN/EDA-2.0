@@ -1,6 +1,7 @@
 using EDA.APPLICATION.DTOs;
 using EDA.APPLICATION.Interfaces;
 using EDA.DOMAIN.Entities;
+using EDA.DOMAIN.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace EDA.INFRAESTRUCTURE.Services
@@ -190,6 +191,93 @@ namespace EDA.INFRAESTRUCTURE.Services
                 })
                 .ToListAsync(cancellationToken);
 
+            // ========== CUENTAS POR COBRAR ==========
+            var createdStatus = (int)InvoiceStatusEnum.Created;
+
+            // Total por Cobrar
+            var totalReceivables = await invoices
+                .Where(i => i.Status == createdStatus)
+                .SumAsync(i => i.OutstandingAmount, cancellationToken);
+
+            // Facturas Pendientes
+            var pendingInvoicesCount = await invoices
+                .Where(i => i.Status == createdStatus && i.OutstandingAmount > 0)
+                .CountAsync(cancellationToken);
+
+            // Cartera Vencida
+            var overdueAmount = await invoices
+                .Where(i => i.Status == createdStatus && i.DueDate != null && i.DueDate < today)
+                .SumAsync(i => i.OutstandingAmount, cancellationToken);
+
+            // Por Vencer (próximos 7 días)
+            var next7Days = today.AddDays(7);
+            var dueNext7DaysAmount = await invoices
+                .Where(i => i.Status == createdStatus && i.DueDate != null && i.DueDate >= today && i.DueDate <= next7Days)
+                .SumAsync(i => i.OutstandingAmount, cancellationToken);
+
+            // Aging Report
+            var agingReport = new List<AgingReportItem>();
+
+            // Corriente (no vencido o vencido <= 30 días)
+            var currentAmount = await invoices
+                .Where(i => i.Status == createdStatus && i.OutstandingAmount > 0 &&
+                       (i.DueDate == null || i.DueDate >= today.AddDays(-30)))
+                .SumAsync(i => i.OutstandingAmount, cancellationToken);
+            var currentCount = await invoices
+                .Where(i => i.Status == createdStatus && i.OutstandingAmount > 0 &&
+                       (i.DueDate == null || i.DueDate >= today.AddDays(-30)))
+                .CountAsync(cancellationToken);
+            agingReport.Add(new AgingReportItem { Range = "Corriente", Amount = currentAmount, Count = currentCount });
+
+            // 31-60 días vencido
+            var days31to60Amount = await invoices
+                .Where(i => i.Status == createdStatus && i.OutstandingAmount > 0 &&
+                       i.DueDate != null && i.DueDate < today.AddDays(-30) && i.DueDate >= today.AddDays(-60))
+                .SumAsync(i => i.OutstandingAmount, cancellationToken);
+            var days31to60Count = await invoices
+                .Where(i => i.Status == createdStatus && i.OutstandingAmount > 0 &&
+                       i.DueDate != null && i.DueDate < today.AddDays(-30) && i.DueDate >= today.AddDays(-60))
+                .CountAsync(cancellationToken);
+            agingReport.Add(new AgingReportItem { Range = "31-60 dias", Amount = days31to60Amount, Count = days31to60Count });
+
+            // 61-90 días vencido
+            var days61to90Amount = await invoices
+                .Where(i => i.Status == createdStatus && i.OutstandingAmount > 0 &&
+                       i.DueDate != null && i.DueDate < today.AddDays(-60) && i.DueDate >= today.AddDays(-90))
+                .SumAsync(i => i.OutstandingAmount, cancellationToken);
+            var days61to90Count = await invoices
+                .Where(i => i.Status == createdStatus && i.OutstandingAmount > 0 &&
+                       i.DueDate != null && i.DueDate < today.AddDays(-60) && i.DueDate >= today.AddDays(-90))
+                .CountAsync(cancellationToken);
+            agingReport.Add(new AgingReportItem { Range = "61-90 dias", Amount = days61to90Amount, Count = days61to90Count });
+
+            // > 90 días vencido
+            var daysOver90Amount = await invoices
+                .Where(i => i.Status == createdStatus && i.OutstandingAmount > 0 &&
+                       i.DueDate != null && i.DueDate < today.AddDays(-90))
+                .SumAsync(i => i.OutstandingAmount, cancellationToken);
+            var daysOver90Count = await invoices
+                .Where(i => i.Status == createdStatus && i.OutstandingAmount > 0 &&
+                       i.DueDate != null && i.DueDate < today.AddDays(-90))
+                .CountAsync(cancellationToken);
+            agingReport.Add(new AgingReportItem { Range = "> 90 dias", Amount = daysOver90Amount, Count = daysOver90Count });
+
+            // Top 10 Facturas Vencidas
+            var topOverdueInvoices = await invoices
+                .Include(i => i.Customer)
+                .Where(i => i.Status == createdStatus && i.DueDate != null && i.DueDate < today && i.OutstandingAmount > 0)
+                .OrderByDescending(i => i.OutstandingAmount)
+                .Take(10)
+                .Select(i => new OverdueInvoiceItem
+                {
+                    InvoiceNumber = i.InvoiceNumber,
+                    CustomerName = i.Customer != null ? i.Customer.Name : "Sin cliente",
+                    DueDate = i.DueDate ?? today,
+                    DaysOverdue = (int)(today - (i.DueDate ?? today)).TotalDays,
+                    OutstandingAmount = i.OutstandingAmount
+                })
+                .ToListAsync(cancellationToken);
+
             return new DashboardData
             {
                 TodaySales = todaySales,
@@ -206,7 +294,14 @@ namespace EDA.INFRAESTRUCTURE.Services
                 TopFamilies = topFamilies,
                 SalesByHour = salesByHour,
                 PaymentMethods = paymentMethods,
-                RecentInvoices = recentInvoices
+                RecentInvoices = recentInvoices,
+                // Cuentas por Cobrar
+                TotalReceivables = totalReceivables,
+                PendingInvoicesCount = pendingInvoicesCount,
+                OverdueAmount = overdueAmount,
+                DueNext7DaysAmount = dueNext7DaysAmount,
+                AgingReport = agingReport,
+                TopOverdueInvoices = topOverdueInvoices
             };
         }
     }
