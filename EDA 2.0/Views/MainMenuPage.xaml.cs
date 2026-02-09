@@ -4,6 +4,7 @@ using EDA.APPLICATION.Features.ShiftFeature.Commands.UpdateShiftCommand;
 using EDA.APPLICATION.Features.ShiftFeature.Queries;
 using EDA.APPLICATION.Interfaces;
 using EDA.DOMAIN.Enums;
+using EDA_2._0.Views.Base;
 using EDA_2._0.Views.Reports;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,10 +14,13 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EDA_2._0.Views
 {
-    public sealed partial class MainMenuPage : Page
+    public sealed partial class MainMenuPage : CancellablePage
     {
         private readonly IMediator _mediator;
         private readonly IUpdateCheckerService _updateChecker;
@@ -28,20 +32,32 @@ namespace EDA_2._0.Views
             _mediator = App.Services.GetRequiredService<IMediator>();
             _updateChecker = App.Services.GetRequiredService<IUpdateCheckerService>();
             ConfigureMenuByRole();
-            CheckForUpdatesAsync();
+            Loaded += MainMenuPage_Loaded;
         }
 
-        private async void CheckForUpdatesAsync()
+        private void MainMenuPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            SafeExecuteAsync(CheckForUpdatesAsync);
+        }
+
+        private async Task CheckForUpdatesAsync(CancellationToken cancellationToken)
         {
             try
             {
-                _updateResult = await _updateChecker.CheckForUpdatesAsync();
+                _updateResult = await _updateChecker.CheckForUpdatesAsync(cancellationToken);
+
+                if (cancellationToken.IsCancellationRequested) return;
+
                 if (_updateResult.UpdateAvailable)
                 {
                     UpdateInfoBar.Title = "Actualizacion disponible";
                     UpdateInfoBar.Message = $"Version {_updateResult.LatestVersion} disponible. Version actual: {_updateResult.CurrentVersion}";
                     UpdateInfoBar.IsOpen = true;
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancelado por navegacion
             }
             catch
             {
@@ -93,6 +109,8 @@ namespace EDA_2._0.Views
                 NavCAIs.Visibility = Visibility.Collapsed;
                 NavUsuarios.Visibility = Visibility.Collapsed;
                 NavEmpresa.Visibility = Visibility.Collapsed;
+                NavCajas.Visibility = Visibility.Collapsed;
+                NavImpresoras.Visibility = Visibility.Collapsed;
                 HeaderConfiguracion.Visibility = Visibility.Collapsed;
             }
             // Admin tiene acceso a todo (por defecto visible)
@@ -184,6 +202,12 @@ namespace EDA_2._0.Views
                     case "facturascompra":
                         ContentFrame.Navigate(typeof(PurchaseBillsPage));
                         break;
+                    case "cajas":
+                        ContentFrame.Navigate(typeof(CashRegistersPage));
+                        break;
+                    case "impresoras":
+                        ContentFrame.Navigate(typeof(PrinterConfigPage));
+                        break;
                 }
             }
         }
@@ -230,6 +254,7 @@ namespace EDA_2._0.Views
             }
 
             var shift = App.CurrentShift;
+            var ct = PageCancellationToken;
 
             // Obtener datos de cierre del turno via Query
             var closingResult = await _mediator.Send(new GetShiftClosingDataQuery
@@ -237,7 +262,9 @@ namespace EDA_2._0.Views
                 UserId = shift.UserId,
                 ShiftStartTime = shift.StartTime,
                 InitialAmount = shift.InitialAmount
-            });
+            }, ct);
+
+            if (!IsPageActive) return;
 
             if (!closingResult.Succeeded || closingResult.Data == null)
             {
@@ -299,6 +326,46 @@ namespace EDA_2._0.Views
 
             if (result == ContentDialogResult.Primary)
             {
+                // Verificar facturas pendientes de imprimir (EndOfDay strategy)
+                if (closingData.UnprintedInvoices.Count > 0)
+                {
+                    var unprintedInfoText = new TextBlock
+                    {
+                        Text = $"Hay {closingData.UnprintedInvoices.Count} factura(s) pendientes de imprimir:",
+                        Margin = new Thickness(0, 0, 0, 12),
+                        TextWrapping = TextWrapping.Wrap
+                    };
+
+                    var unprintedList = new ListView
+                    {
+                        ItemsSource = closingData.UnprintedInvoices.Select(i => $"{i.InvoiceNumber} - {i.Customer?.Name ?? "Cliente"} - L {i.Total:N2}").ToList(),
+                        MaxHeight = 200,
+                        SelectionMode = ListViewSelectionMode.None
+                    };
+
+                    var printContent = new StackPanel
+                    {
+                        Width = 450,
+                        Children = { unprintedInfoText, unprintedList }
+                    };
+
+                    var printDialog = new ContentDialog
+                    {
+                        Title = "Facturas Pendientes de Imprimir",
+                        Content = printContent,
+                        PrimaryButtonText = "Continuar sin imprimir",
+                        CloseButtonText = "Cancelar cierre",
+                        DefaultButton = ContentDialogButton.Close,
+                        XamlRoot = this.XamlRoot
+                    };
+
+                    var printResult = await printDialog.ShowAsync();
+                    if (printResult != ContentDialogResult.Primary)
+                    {
+                        return; // Cancelar cierre de turno
+                    }
+                }
+
                 try
                 {
                     decimal finalCash = double.IsNaN(cashBox.Value) ? 0 : (decimal)cashBox.Value;
@@ -314,12 +381,16 @@ namespace EDA_2._0.Views
                         ExpectedAmount = closingData.ExpectedTotal
                     };
 
-                    var updateResult = await _mediator.Send(command);
+                    var updateResult = await _mediator.Send(command, ct);
+
+                    if (!IsPageActive) return;
 
                     if (updateResult.Succeeded)
                     {
                         // Obtener datos de empresa
-                        var companyResult = await _mediator.Send(new GetCompanyQuery());
+                        var companyResult = await _mediator.Send(new GetCompanyQuery(), ct);
+
+                        if (!IsPageActive) return;
                         var company = companyResult.Data;
 
                         // Generar PDF

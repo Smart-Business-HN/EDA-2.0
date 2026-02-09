@@ -47,6 +47,9 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
         public bool IsCredit { get; set; }
         public int? CreditDays { get; set; }
 
+        // Cash Register
+        public int? CashRegisterId { get; set; }
+
         // Items y Pagos
         public List<CreateInvoiceItemDto> Items { get; set; } = new();
         public List<CreateInvoicePaymentDto> Payments { get; set; } = new();
@@ -192,7 +195,10 @@ namespace EDA.APPLICATION.Features.InvoiceFeature.Commands.CreateInvoiceCommand
                 Status = status,
                 OutstandingAmount = outstandingAmount,
                 CreditDays = creditDays,
-                DueDate = dueDate
+                DueDate = dueDate,
+                CashRegisterId = request.CashRegisterId,
+                IsPrinted = false,
+                PrintCount = 0
             };
 
             // 5. Agregar factura a la base de datos

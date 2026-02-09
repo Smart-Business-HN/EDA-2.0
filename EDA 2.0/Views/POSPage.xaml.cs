@@ -1,5 +1,6 @@
 using EDA.APPLICATION.DTOs;
 using EDA.APPLICATION.Features.CaiFeature.Queries;
+using EDA.APPLICATION.Features.CashRegisterFeature.Queries;
 using EDA.APPLICATION.Features.CompanyFeature.Queries;
 using EDA.APPLICATION.Features.CustomerFeature.Commands.CreateCustomerCommand;
 using EDA.APPLICATION.Features.CustomerFeature.Queries;
@@ -16,6 +17,8 @@ using EDA.APPLICATION.Features.ProductFeature.Queries;
 using EDA.APPLICATION.Features.TaxFeature.Queries;
 using EDA.APPLICATION.Interfaces;
 using EDA.DOMAIN.Entities;
+using EDA.DOMAIN.Enums;
+using EDA_2._0.Views.Base;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -29,6 +32,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EDA_2._0.Views
@@ -116,7 +120,7 @@ namespace EDA_2._0.Views
         public decimal Amount { get; set; }
     }
 
-    public sealed partial class POSPage : Page
+    public sealed partial class POSPage : CancellablePage
     {
         private readonly IMediator _mediator;
 
@@ -153,28 +157,36 @@ namespace EDA_2._0.Views
         private Microsoft.UI.Xaml.Media.SolidColorBrush GetBrush(string key) =>
             (Microsoft.UI.Xaml.Media.SolidColorBrush)Application.Current.Resources[key];
 
-        private async void Page_Loaded(object sender, RoutedEventArgs e)
+        private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            await LoadInitialData();
-            SetupCashierInfo();
-            await LoadPendingSalesFromDb();
-            if (_saleSessions.Count == 0)
+            SafeExecuteAsync(async ct =>
             {
-                CreateNewSaleSession();
-            }
-            else
-            {
-                LoadSession(_saleSessions[0]);
-            }
-            UpdateTotals();
+                await LoadInitialData(ct);
+                if (!IsPageActive) return;
+
+                SetupCashierInfo();
+                await LoadPendingSalesFromDb(ct);
+                if (!IsPageActive) return;
+
+                if (_saleSessions.Count == 0)
+                {
+                    CreateNewSaleSession();
+                }
+                else
+                {
+                    LoadSession(_saleSessions[0]);
+                }
+                UpdateTotals();
+            });
         }
 
-        private async Task LoadInitialData()
+        private async Task LoadInitialData(CancellationToken cancellationToken)
         {
             try
             {
                 // Cargar productos
-                var productsResult = await _mediator.Send(new GetAllProductsQuery { GetAll = true });
+                var productsResult = await _mediator.Send(new GetAllProductsQuery { GetAll = true }, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
                 if (productsResult.Succeeded && productsResult.Data != null)
                 {
                     _allProducts = productsResult.Data.Items.ToList();
@@ -182,7 +194,8 @@ namespace EDA_2._0.Views
                 }
 
                 // Cargar clientes
-                var customersResult = await _mediator.Send(new GetAllCustomersQuery { GetAll = true });
+                var customersResult = await _mediator.Send(new GetAllCustomersQuery { GetAll = true }, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
                 if (customersResult.Succeeded && customersResult.Data != null)
                 {
                     _customers = customersResult.Data.Items.ToList();
@@ -193,7 +206,8 @@ namespace EDA_2._0.Views
                 }
 
                 // Cargar descuentos
-                var discountsResult = await _mediator.Send(new GetAllDiscountsQuery { GetAll = true });
+                var discountsResult = await _mediator.Send(new GetAllDiscountsQuery { GetAll = true }, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
                 if (discountsResult.Succeeded && discountsResult.Data != null)
                 {
                     _discounts = discountsResult.Data.Items.ToList();
@@ -201,41 +215,53 @@ namespace EDA_2._0.Views
                 }
 
                 // Cargar tipos de pago
-                var paymentTypesResult = await _mediator.Send(new GetAllPaymentTypesQuery { GetAll = true });
+                var paymentTypesResult = await _mediator.Send(new GetAllPaymentTypesQuery { GetAll = true }, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
                 if (paymentTypesResult.Succeeded && paymentTypesResult.Data != null)
                 {
                     _paymentTypes = paymentTypesResult.Data.Items.ToList();
                     PaymentTypeComboBox.ItemsSource = _paymentTypes;
+                    SelectDefaultPaymentType();
                 }
 
                 // Cargar familias (para filtro y crear productos)
-                var familiesResult = await _mediator.Send(new GetAllFamiliesQuery { GetAll = true });
+                var familiesResult = await _mediator.Send(new GetAllFamiliesQuery { GetAll = true }, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
                 if (familiesResult.Succeeded && familiesResult.Data != null)
                 {
                     _families = familiesResult.Data.Items.ToList();
                     BuildFamilyButtons();
                 }
 
-                var taxesResult = await _mediator.Send(new GetAllTaxesQuery { GetAll = true });
+                var taxesResult = await _mediator.Send(new GetAllTaxesQuery { GetAll = true }, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
                 if (taxesResult.Succeeded && taxesResult.Data != null)
                 {
                     _taxes = taxesResult.Data.Items.ToList();
                 }
 
                 // Cargar CAI activo
-                await LoadActiveCai();
+                await LoadActiveCai(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw; // Re-throw para que SafeExecuteAsync lo maneje
             }
             catch (Exception ex)
             {
-                await ShowError($"Error al cargar datos: {ex.Message}");
+                if (IsPageActive)
+                {
+                    await ShowError($"Error al cargar datos: {ex.Message}");
+                }
             }
         }
 
-        private async Task LoadActiveCai()
+        private async Task LoadActiveCai(CancellationToken cancellationToken = default)
         {
             try
             {
-                var result = await _mediator.Send(new GetActiveCaiQuery());
+                var result = await _mediator.Send(new GetActiveCaiQuery(), cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
 
                 if (result.Succeeded && result.Data != null)
                 {
@@ -248,9 +274,16 @@ namespace EDA_2._0.Views
                     CaiInfoText.Text = "Sin CAI activo";
                 }
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception)
             {
-                CaiInfoText.Text = "Error al cargar CAI";
+                if (IsPageActive)
+                {
+                    CaiInfoText.Text = "Error al cargar CAI";
+                }
             }
         }
 
@@ -676,9 +709,9 @@ namespace EDA_2._0.Views
                 Amount = amount
             });
 
-            // Limpiar campos
+            // Limpiar monto y volver a seleccionar Efectivo por defecto
             PaymentAmountTextBox.Text = string.Empty;
-            PaymentTypeComboBox.SelectedIndex = -1;
+            SelectDefaultPaymentType();
 
             UpdateTotals();
         }
@@ -1085,6 +1118,20 @@ namespace EDA_2._0.Views
                 BuildSaleTabButtons();
             }
         }
+        private void SetSelectedPaymentType(PaymentType? paymentType)
+        {
+            PaymentTypeComboBox.SelectedItem = paymentType;
+        }
+
+        private void SelectDefaultPaymentType()
+        {
+            var efectivo = _paymentTypes.FirstOrDefault(pt => pt.Name.Equals("Efectivo", StringComparison.OrdinalIgnoreCase));
+            if (efectivo == null)
+            {
+                efectivo = _paymentTypes.FirstOrDefault(pt => pt.Id == 1);
+            }
+            SetSelectedPaymentType(efectivo);
+        }
 
         #endregion
 
@@ -1144,7 +1191,7 @@ namespace EDA_2._0.Views
             CreditDaysNumberBox.Value = double.NaN;
             DueDatePreview.Text = string.Empty;
 
-            PaymentTypeComboBox.SelectedIndex = -1;
+            SelectDefaultPaymentType();
             PaymentAmountTextBox.Text = string.Empty;
             UpdateTotals();
             BuildSaleTabButtons();
@@ -1422,14 +1469,15 @@ namespace EDA_2._0.Views
             }
         }
 
-        private async Task LoadPendingSalesFromDb()
+        private async Task LoadPendingSalesFromDb(CancellationToken cancellationToken = default)
         {
             try
             {
                 var currentUser = App.CurrentUser;
                 if (currentUser == null) return;
 
-                var result = await _mediator.Send(new GetPendingSalesByUserIdQuery { UserId = currentUser.Id });
+                var result = await _mediator.Send(new GetPendingSalesByUserIdQuery { UserId = currentUser.Id }, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
 
                 if (!result.Succeeded || result.Data == null) return;
 
@@ -1642,11 +1690,14 @@ namespace EDA_2._0.Views
                     Items = items,
                     Payments = payments,
                     IsCredit = _isCredit,
-                    CreditDays = _isCredit ? _creditDays : null
+                    CreditDays = _isCredit ? _creditDays : null,
+                    CashRegisterId = App.CurrentShift?.CashRegisterId
                 };
 
-                // Enviar comando via MediatR
-                var result = await _mediator.Send(command);
+                // Enviar comando via MediatR (usar CancellationToken.None para operacion critica)
+                var result = await _mediator.Send(command, CancellationToken.None);
+
+                if (!IsPageActive) return;
 
                 if (result.Succeeded && result.Data != null)
                 {
@@ -1654,6 +1705,8 @@ namespace EDA_2._0.Views
 
                     // Generar e imprimir PDF
                     await GenerateAndPrintInvoicePdf(invoice, selectedCustomer, _activeCai);
+
+                    if (!IsPageActive) return;
 
                     var successMessage = $"Factura {invoice.InvoiceNumber} creada exitosamente.\n\nTotal: L. {invoice.Total:N2}";
                     if (_isCredit)
@@ -1670,7 +1723,7 @@ namespace EDA_2._0.Views
                     RemoveCurrentSessionAfterInvoice();
 
                     // Recargar CAI para obtener correlativo actualizado
-                    await LoadActiveCai();
+                    await LoadActiveCai(PageCancellationToken);
                 }
                 else
                 {
@@ -1712,7 +1765,7 @@ namespace EDA_2._0.Views
             CreditDaysNumberBox.Value = double.NaN;
             DueDatePreview.Text = string.Empty;
 
-            PaymentTypeComboBox.SelectedIndex = -1;
+            SelectDefaultPaymentType();
             PaymentAmountTextBox.Text = string.Empty;
             UpdateTotals();
         }
@@ -1864,13 +1917,42 @@ namespace EDA_2._0.Views
                 var tempPath = Path.Combine(Path.GetTempPath(), $"Factura_{invoice.InvoiceNumber.Replace("-", "_")}.pdf");
                 await File.WriteAllBytesAsync(tempPath, pdfBytes);
 
-                // Abrir PDF con la aplicación predeterminada
-                var processStartInfo = new ProcessStartInfo
+                // Obtener configuración de impresora del turno actual
+                var copyStrategy = CopyStrategyEnum.DigitalOnly; // Default: solo digital
+                if (App.CurrentShift?.CashRegisterId.HasValue == true)
                 {
-                    FileName = tempPath,
-                    UseShellExecute = true
-                };
-                Process.Start(processStartInfo);
+                    var cashRegisterResult = await _mediator.Send(new GetCashRegisterByIdQuery
+                    {
+                        Id = App.CurrentShift.CashRegisterId.Value
+                    });
+
+                    if (cashRegisterResult.Succeeded && cashRegisterResult.Data?.PrinterConfiguration != null)
+                    {
+                        copyStrategy = (CopyStrategyEnum)cashRegisterResult.Data.PrinterConfiguration.CopyStrategy;
+                    }
+                }
+
+                // Aplicar estrategia de impresión
+                switch (copyStrategy)
+                {
+                    case CopyStrategyEnum.EndOfDay:
+                        // No imprimir ahora, se imprimirá al cerrar turno
+                        Debug.WriteLine("Factura marcada para imprimir al final del día");
+                        break;
+
+                    case CopyStrategyEnum.DigitalOnly:
+                    case CopyStrategyEnum.DoublePrint:
+                    case CopyStrategyEnum.CarbonCopy:
+                    default:
+                        // Abrir PDF con la aplicación predeterminada
+                        var processStartInfo = new ProcessStartInfo
+                        {
+                            FileName = tempPath,
+                            UseShellExecute = true
+                        };
+                        Process.Start(processStartInfo);
+                        break;
+                }
             }
             catch (Exception ex)
             {

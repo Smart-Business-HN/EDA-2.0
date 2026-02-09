@@ -53,13 +53,19 @@ namespace EDA.APPLICATION.Features.ShiftFeature.Queries
             var expectedTotal = request.InitialAmount + expectedCash + expectedCard;
             var totalSales = invoices.Sum(i => i.Total);
 
+            // Obtener facturas no impresas del turno
+            var unprintedInvoices = await _invoiceRepository.ListAsync(
+                new GetUnprintedInvoicesForShiftSpecification(request.UserId, request.ShiftStartTime),
+                cancellationToken);
+
             return new Result<ShiftClosingData>(new ShiftClosingData
             {
                 ExpectedCash = expectedCash,
                 ExpectedCard = expectedCard,
                 ExpectedTotal = expectedTotal,
                 TotalInvoices = invoices.Count,
-                TotalSales = totalSales
+                TotalSales = totalSales,
+                UnprintedInvoices = unprintedInvoices
             });
         }
     }

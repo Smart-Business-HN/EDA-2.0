@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Page
+<base:CancellablePage
     x:Class="EDA_2._0.Views.InvoiceDetailPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:EDA_2._0.Views"
+    xmlns:base="using:EDA_2._0.Views.Base"
     xmlns:converters="using:EDA_2._0.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -113,6 +114,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="100"/>
@@ -127,6 +129,9 @@
 
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Descuento:" FontWeight="SemiBold" Margin="0,8,0,0"/>
                             <TextBlock x:Name="DiscountText" Grid.Row="2" Grid.Column="1" Text="-" Margin="0,8,0,0"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Impresiones:" FontWeight="SemiBold" Margin="0,8,0,0"/>
+                            <TextBlock x:Name="PrintCountText" Grid.Row="3" Grid.Column="1" Text="0" Margin="0,8,0,0"/>
                         </Grid>
                     </StackPanel>
                 </Grid>
@@ -365,4 +370,4 @@
             </Button>
         </StackPanel>
     </Grid>
-</Page>
+</base:CancellablePage>

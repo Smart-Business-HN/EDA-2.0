@@ -33,6 +33,13 @@
         public int? CreditDays { get; set; }
         public DateTime? DueDate { get; set; }
 
+        // Caja Registradora y tracking de impresión
+        public int? CashRegisterId { get; set; }
+        public virtual CashRegister? CashRegister { get; set; }
+        public bool IsPrinted { get; set; } = false;
+        public DateTime? PrintedAt { get; set; }
+        public int PrintCount { get; set; } = 0;
+
         public List<SoldProduct>? SoldProducts { get; set; }
         public List<InvoicePayment>? InvoicePayments { get; set; }
     }

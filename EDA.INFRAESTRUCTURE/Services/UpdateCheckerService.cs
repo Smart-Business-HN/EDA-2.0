@@ -28,7 +28,7 @@ namespace EDA.INFRAESTRUCTURE.Services
             return version?.ToString() ?? "1.0.0.0";
         }
 
-        public async Task<UpdateCheckResult> CheckForUpdatesAsync()
+        public async Task<UpdateCheckResult> CheckForUpdatesAsync(CancellationToken cancellationToken = default)
         {
             var result = new UpdateCheckResult
             {
@@ -43,12 +43,15 @@ namespace EDA.INFRAESTRUCTURE.Services
 
             try
             {
-                var response = await _httpClient.GetStringAsync(_versionCheckUrl);
+                var response = await _httpClient.GetAsync(_versionCheckUrl, cancellationToken);
+                response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
                 var options = new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 };
-                var versionInfo = JsonSerializer.Deserialize<AppVersionInfo>(response, options);
+                var versionInfo = JsonSerializer.Deserialize<AppVersionInfo>(content, options);
 
                 if (versionInfo == null)
                 {
@@ -67,6 +70,10 @@ namespace EDA.INFRAESTRUCTURE.Services
                 {
                     result.UpdateAvailable = latest > current;
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                throw; // Re-throw cancellation
             }
             catch (Exception)
             {

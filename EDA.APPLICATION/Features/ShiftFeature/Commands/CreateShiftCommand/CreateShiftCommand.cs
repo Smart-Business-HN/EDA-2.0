@@ -10,6 +10,7 @@ namespace EDA.APPLICATION.Features.ShiftFeature.Commands.CreateShiftCommand
         public int UserId { get; set; }
         public string ShiftType { get; set; } = null!;
         public decimal InitialAmount { get; set; }
+        public int? CashRegisterId { get; set; }
     }
 
     public class CreateShiftCommandHandler : IRequestHandler<CreateShiftCommand, Result<Shift>>
@@ -29,7 +30,8 @@ namespace EDA.APPLICATION.Features.ShiftFeature.Commands.CreateShiftCommand
                 ShiftType = request.ShiftType,
                 StartTime = DateTime.Now,
                 InitialAmount = request.InitialAmount,
-                IsOpen = true
+                IsOpen = true,
+                CashRegisterId = request.CashRegisterId
             };
 
             await _repositoryAsync.AddAsync(newShift, cancellationToken);

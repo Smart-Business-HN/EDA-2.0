@@ -1,3 +1,5 @@
+using EDA.DOMAIN.Entities;
+
 namespace EDA.APPLICATION.DTOs
 {
     public class ShiftClosingData
@@ -7,5 +9,6 @@ namespace EDA.APPLICATION.DTOs
         public decimal ExpectedTotal { get; set; }
         public int TotalInvoices { get; set; }
         public decimal TotalSales { get; set; }
+        public List<Invoice> UnprintedInvoices { get; set; } = new();
     }
 }

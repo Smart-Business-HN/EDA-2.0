@@ -1,4 +1,5 @@
 using EDA.APPLICATION.DTOs;
+using EDA.APPLICATION.Features.CashRegisterFeature.Queries;
 using EDA.APPLICATION.Features.CompanyFeature.Queries;
 using EDA.APPLICATION.Features.ShiftFeature.Commands.CreateShiftCommand;
 using EDA.APPLICATION.Features.ShiftFeature.Commands.DeleteShiftCommand;
@@ -7,6 +8,7 @@ using EDA.APPLICATION.Features.ShiftFeature.Queries;
 using EDA.APPLICATION.Features.UserFeature.Queries;
 using EDA.APPLICATION.Interfaces;
 using EDA.DOMAIN.Entities;
+using EDA_2._0.Views.Base;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -15,17 +17,20 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EDA_2._0.Views
 {
-    public sealed partial class ShiftsPage : Page
+    public sealed partial class ShiftsPage : CancellablePage
     {
         private readonly IMediator _mediator;
         private int _currentPage = 1;
         private int _pageSize = 10;
         private int _totalPages = 1;
         private List<User> _users = new();
+        private List<CashRegister> _cashRegisters = new();
 
         public ShiftsPage()
         {
@@ -33,25 +38,65 @@ namespace EDA_2._0.Views
             _mediator = App.Services.GetRequiredService<IMediator>();
         }
 
-        private async void Page_Loaded(object sender, RoutedEventArgs e)
+        private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            await LoadUsers();
-            await LoadShifts();
+            SafeExecuteAsync(async ct =>
+            {
+                await LoadUsers(ct);
+                if (!IsPageActive) return;
+
+                await LoadCashRegisters(ct);
+                if (!IsPageActive) return;
+
+                await LoadShifts(ct);
+            });
         }
 
-        private async Task LoadUsers()
+        private async Task LoadUsers(CancellationToken cancellationToken = default)
         {
             try
             {
-                var result = await _mediator.Send(new GetAllUsersQuery { PageSize = 1000 });
+                var result = await _mediator.Send(new GetAllUsersQuery { PageSize = 1000 }, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
                 if (result.Succeeded && result.Data != null)
                 {
                     _users = result.Data.Items;
                 }
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
-                await ShowError($"Error al cargar usuarios: {ex.Message}");
+                if (IsPageActive)
+                {
+                    await ShowError($"Error al cargar usuarios: {ex.Message}");
+                }
+            }
+        }
+
+        private async Task LoadCashRegisters(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var result = await _mediator.Send(new GetActiveCashRegistersQuery(), cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                if (result.Succeeded && result.Data != null)
+                {
+                    _cashRegisters = result.Data;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                if (IsPageActive)
+                {
+                    await ShowError($"Error al cargar cajas: {ex.Message}");
+                }
             }
         }
 
@@ -65,7 +110,7 @@ namespace EDA_2._0.Views
             };
         }
 
-        private async Task LoadShifts()
+        private async Task LoadShifts(CancellationToken cancellationToken = default)
         {
             SetLoading(true);
 
@@ -80,7 +125,8 @@ namespace EDA_2._0.Views
                     GetAll = false
                 };
 
-                var result = await _mediator.Send(query);
+                var result = await _mediator.Send(query, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
 
                 if (result.Succeeded && result.Data != null)
                 {
@@ -93,13 +139,23 @@ namespace EDA_2._0.Views
                     await ShowError(result.Message ?? "Error al cargar turnos");
                 }
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
-                await ShowError($"Error: {ex.Message}");
+                if (IsPageActive)
+                {
+                    await ShowError($"Error: {ex.Message}");
+                }
             }
             finally
             {
-                SetLoading(false);
+                if (IsPageActive)
+                {
+                    SetLoading(false);
+                }
             }
         }
 
@@ -177,10 +233,26 @@ namespace EDA_2._0.Views
                 Margin = new Thickness(0, 0, 0, 12)
             };
 
+            var cashRegisterComboBox = new ComboBox
+            {
+                Header = "Caja Registradora *",
+                PlaceholderText = "Seleccione una caja",
+                ItemsSource = _cashRegisters,
+                DisplayMemberPath = "Name",
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Margin = new Thickness(0, 0, 0, 12)
+            };
+
+            // Auto-select if only one cash register
+            if (_cashRegisters.Count == 1)
+            {
+                cashRegisterComboBox.SelectedIndex = 0;
+            }
+
             var content = new StackPanel
             {
                 Width = 400,
-                Children = { userComboBox, shiftTypeComboBox, initialAmountBox }
+                Children = { userComboBox, shiftTypeComboBox, cashRegisterComboBox, initialAmountBox }
             };
 
             var dialog = new ContentDialog
@@ -210,14 +282,21 @@ namespace EDA_2._0.Views
                     return;
                 }
 
+                var selectedCashRegister = cashRegisterComboBox.SelectedItem as CashRegister;
+                if (selectedCashRegister == null && _cashRegisters.Count > 0)
+                {
+                    await ShowError("Debe seleccionar una caja registradora.");
+                    return;
+                }
+
                 var shiftType = shiftTypeComboBox.SelectedItem.ToString()!;
                 decimal initialAmount = double.IsNaN(initialAmountBox.Value) ? 0 : (decimal)initialAmountBox.Value;
 
-                await CreateShift(selectedUser.Id, shiftType, initialAmount);
+                await CreateShift(selectedUser.Id, shiftType, initialAmount, selectedCashRegister?.Id);
             }
         }
 
-        private async Task CreateShift(int userId, string shiftType, decimal initialAmount)
+        private async Task CreateShift(int userId, string shiftType, decimal initialAmount, int? cashRegisterId)
         {
             SetLoading(true);
 
@@ -227,7 +306,8 @@ namespace EDA_2._0.Views
                 {
                     UserId = userId,
                     ShiftType = shiftType,
-                    InitialAmount = initialAmount
+                    InitialAmount = initialAmount,
+                    CashRegisterId = cashRegisterId
                 };
 
                 var result = await _mediator.Send(command);
@@ -266,13 +346,17 @@ namespace EDA_2._0.Views
                     return;
                 }
 
+                var ct = PageCancellationToken;
+
                 // Obtener datos de cierre del turno via Query
                 var closingResult = await _mediator.Send(new GetShiftClosingDataQuery
                 {
                     UserId = shift.UserId,
                     ShiftStartTime = shift.StartTime,
                     InitialAmount = shift.InitialAmount
-                });
+                }, ct);
+
+                if (!IsPageActive) return;
 
                 if (!closingResult.Succeeded || closingResult.Data == null)
                 {
@@ -337,6 +421,7 @@ namespace EDA_2._0.Views
         private async Task CloseShift(Shift shift, decimal finalCash, decimal finalCard, decimal expectedCash, decimal expectedCard, decimal expectedTotal, int totalInvoices, decimal totalSales)
         {
             SetLoading(true);
+            var ct = PageCancellationToken;
 
             try
             {
@@ -348,14 +433,18 @@ namespace EDA_2._0.Views
                     ExpectedAmount = expectedTotal
                 };
 
-                var result = await _mediator.Send(command);
+                var result = await _mediator.Send(command, ct);
+
+                if (!IsPageActive) return;
 
                 if (result.Succeeded)
                 {
                     decimal finalAmount = finalCash + finalCard + shift.InitialAmount;
                     decimal difference = expectedTotal - finalAmount;
 
-                    var companyResult = await _mediator.Send(new GetCompanyQuery());
+                    var companyResult = await _mediator.Send(new GetCompanyQuery(), ct);
+                    if (!IsPageActive) return;
+
                     var company = companyResult.Data;
 
                     var pdfService = App.Services.GetRequiredService<IShiftReportPdfService>();
@@ -386,24 +475,37 @@ namespace EDA_2._0.Views
                     Process.Start(new ProcessStartInfo(tempPath) { UseShellExecute = true });
 
                     await ShowSuccess("Turno cerrado exitosamente.");
-                    await LoadShifts();
+                    await LoadShifts(ct);
                 }
                 else
                 {
                     await ShowError(result.Message ?? "Error al cerrar turno");
                 }
             }
+            catch (OperationCanceledException)
+            {
+                // Cancelado por navegacion
+            }
             catch (EDA.APPLICATION.Exceptions.ValidationException vex)
             {
-                await ShowError(string.Join("\n", vex.Errors));
+                if (IsPageActive)
+                {
+                    await ShowError(string.Join("\n", vex.Errors));
+                }
             }
             catch (Exception ex)
             {
-                await ShowError($"Error: {ex.Message}");
+                if (IsPageActive)
+                {
+                    await ShowError($"Error: {ex.Message}");
+                }
             }
             finally
             {
-                SetLoading(false);
+                if (IsPageActive)
+                {
+                    SetLoading(false);
+                }
             }
         }
 

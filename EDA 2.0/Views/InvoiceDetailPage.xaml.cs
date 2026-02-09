@@ -1,12 +1,14 @@
 using EDA.APPLICATION.DTOs;
 using EDA.APPLICATION.Features.CompanyFeature.Queries;
 using EDA.APPLICATION.Features.InvoiceFeature.Commands.AddPaymentToInvoiceCommand;
+using EDA.APPLICATION.Features.InvoiceFeature.Commands.UpdateInvoicePrintStatusCommand;
 using EDA.APPLICATION.Features.InvoiceFeature.Commands.VoidInvoiceCommand;
 using EDA.APPLICATION.Features.InvoiceFeature.Queries.GetInvoiceByIdQuery;
 using EDA.APPLICATION.Features.PaymentTypeFeature.Queries;
 using EDA.APPLICATION.Interfaces;
 using EDA.DOMAIN.Entities;
 using EDA.DOMAIN.Enums;
+using EDA_2._0.Views.Base;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -17,12 +19,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.UI;
 
 namespace EDA_2._0.Views
 {
-    public sealed partial class InvoiceDetailPage : Page
+    public sealed partial class InvoiceDetailPage : CancellablePage
     {
         private readonly IMediator _mediator;
         private int _invoiceId;
@@ -40,21 +43,31 @@ namespace EDA_2._0.Views
             _invoiceId = invoiceId;
         }
 
-        private async void Page_Loaded(object sender, RoutedEventArgs e)
+        private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            await LoadPaymentTypes();
-            await LoadInvoice();
+            SafeExecuteAsync(async ct =>
+            {
+                await LoadPaymentTypes(ct);
+                if (!IsPageActive) return;
+
+                await LoadInvoice(ct);
+            });
         }
 
-        private async Task LoadPaymentTypes()
+        private async Task LoadPaymentTypes(CancellationToken cancellationToken = default)
         {
             try
             {
-                var result = await _mediator.Send(new GetAllPaymentTypesQuery { GetAll = true });
+                var result = await _mediator.Send(new GetAllPaymentTypesQuery { GetAll = true }, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
                 if (result.Succeeded && result.Data != null)
                 {
                     _paymentTypes = result.Data.Items.ToList();
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch
             {
@@ -62,13 +75,14 @@ namespace EDA_2._0.Views
             }
         }
 
-        private async Task LoadInvoice()
+        private async Task LoadInvoice(CancellationToken cancellationToken = default)
         {
             SetLoading(true);
 
             try
             {
-                var result = await _mediator.Send(new GetInvoiceByIdQuery { Id = _invoiceId });
+                var result = await _mediator.Send(new GetInvoiceByIdQuery { Id = _invoiceId }, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
 
                 if (result.Succeeded && result.Data != null)
                 {
@@ -80,13 +94,23 @@ namespace EDA_2._0.Views
                     await ShowError(result.Message ?? "Error al cargar la factura");
                 }
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
-                await ShowError($"Error: {ex.Message}");
+                if (IsPageActive)
+                {
+                    await ShowError($"Error: {ex.Message}");
+                }
             }
             finally
             {
-                SetLoading(false);
+                if (IsPageActive)
+                {
+                    SetLoading(false);
+                }
             }
         }
 
@@ -108,6 +132,7 @@ namespace EDA_2._0.Views
                 : "-";
             CaiText.Text = _invoice.Cai?.Code ?? "-";
             DiscountText.Text = _invoice.Discount?.Name ?? "Sin descuento";
+            PrintCountText.Text = _invoice.PrintCount.ToString();
 
             // Products
             ProductsListView.ItemsSource = _invoice.SoldProducts;
@@ -407,6 +432,9 @@ namespace EDA_2._0.Views
                     UseShellExecute = true
                 };
                 Process.Start(processStartInfo);
+
+                // Actualizar estado de impresión
+                await UpdatePrintStatus();
             }
             catch (Exception ex)
             {
@@ -415,6 +443,30 @@ namespace EDA_2._0.Views
             finally
             {
                 SetLoading(false);
+            }
+        }
+
+        private async Task UpdatePrintStatus()
+        {
+            if (_invoice == null) return;
+
+            try
+            {
+                var command = new UpdateInvoicePrintStatusCommand
+                {
+                    InvoiceId = _invoice.Id,
+                    IsPrinted = true,
+                    PrintedAt = DateTime.Now
+                };
+
+                await _mediator.Send(command);
+
+                // Recargar para mostrar el PrintCount actualizado
+                await LoadInvoice();
+            }
+            catch
+            {
+                // Silently ignore print status update errors
             }
         }
 

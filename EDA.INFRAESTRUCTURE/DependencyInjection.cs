@@ -38,6 +38,9 @@ namespace EDA.INFRAESTRUCTURE
             // Servicio de actualizaciones
             services.AddSingleton<IUpdateCheckerService, UpdateCheckerService>();
 
+            // Servicio de descubrimiento de impresoras
+            services.AddSingleton<IPrinterDiscoveryService, PrinterDiscoveryService>();
+
             return services;
         }
     }

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<base:CancellablePage
+    x:Class="EDA_2._0.Views.PrinterConfigPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EDA_2._0.Views"
+    xmlns:base="using:EDA_2._0.Views.Base"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent"
+    Loaded="Page_Loaded">
+
+    <Page.Resources>
+        <local:PrinterTypeConverter x:Key="PrinterTypeConverter"/>
+        <local:CopyStrategyConverter x:Key="CopyStrategyConverter"/>
+        <local:PrintWidthConverter x:Key="PrintWidthConverter"/>
+        <local:StatusBackgroundConverter x:Key="StatusBackgroundConverter"/>
+        <local:StatusTextConverter x:Key="StatusTextConverter"/>
+    </Page.Resources>
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <TextBlock
+                Text="Configuracion de Impresoras"
+                FontSize="28"
+                FontWeight="SemiBold"/>
+            <TextBlock
+                Text="Configurar impresoras para facturacion (termicas y matriciales)"
+                FontSize="14"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Toolbar: Search + New Button -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MaxWidth="400"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                x:Name="SearchTextBox"
+                Grid.Column="0"
+                PlaceholderText="Buscar por nombre..."
+                KeyDown="SearchTextBox_KeyDown"/>
+
+            <Button
+                x:Name="NewButton"
+                Grid.Column="1"
+                Content="+ Nueva Configuracion"
+                Style="{StaticResource AccentButtonStyle}"
+                Click="NewButton_Click"
+                Margin="12,0,0,0"/>
+        </Grid>
+
+        <!-- Printers List -->
+        <ListView
+            x:Name="PrintersListView"
+            Grid.Row="2"
+            SelectionMode="None">
+            <ListView.Header>
+                <Grid Padding="12,8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="150"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="80"/>
+                        <ColumnDefinition Width="Auto" MinWidth="180"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Nombre" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Text="Tipo" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="2" Text="Estrategia" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="3" Text="Fuente" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="4" Text="Ancho" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="5" Text="Estado" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="6" Text="Acciones" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                </Grid>
+            </ListView.Header>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="12,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="Auto" MinWidth="180"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Grid.Column="1" Text="{Binding PrinterType, Converter={StaticResource PrinterTypeConverter}}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding CopyStrategy, Converter={StaticResource CopyStrategyConverter}}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="3" Text="{Binding FontSize}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <TextBlock Grid.Column="4" Text="{Binding PrintWidth, Converter={StaticResource PrintWidthConverter}}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <Border Grid.Column="5"
+                                Background="{Binding IsActive, Converter={StaticResource StatusBackgroundConverter}}"
+                                CornerRadius="4"
+                                Padding="8,4"
+                                HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding IsActive, Converter={StaticResource StatusTextConverter}}"
+                                       FontSize="12"/>
+                        </Border>
+                        <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <Button
+                                Content="Editar"
+                                Click="EditButton_Click"
+                                Tag="{Binding}"/>
+                            <Button
+                                Content="Eliminar"
+                                Click="DeleteButton_Click"
+                                Tag="{Binding}"/>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Footer: Pagination + Loading -->
+        <Grid Grid.Row="3" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Pagination -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                <Button
+                    x:Name="PreviousPageButton"
+                    Content="&lt; Anterior"
+                    Click="PreviousPageButton_Click"
+                    IsEnabled="False"/>
+                <TextBlock
+                    x:Name="PageInfoText"
+                    Text="Pagina 1 de 1"
+                    VerticalAlignment="Center"
+                    Margin="8,0"/>
+                <Button
+                    x:Name="NextPageButton"
+                    Content="Siguiente &gt;"
+                    Click="NextPageButton_Click"
+                    IsEnabled="False"/>
+            </StackPanel>
+
+            <!-- Loading -->
+            <ProgressRing
+                x:Name="LoadingRing"
+                Grid.Column="1"
+                IsActive="False"
+                Width="24"
+                Height="24"/>
+        </Grid>
+    </Grid>
+</base:CancellablePage>

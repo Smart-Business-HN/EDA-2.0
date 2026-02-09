@@ -28,6 +28,8 @@ namespace EDA.INFRAESTRUCTURE
         public DbSet<ExpenseAccount> ExpenseAccounts { get; set; }
         public DbSet<PurchaseBill> PurchaseBills { get; set; }
         public DbSet<PurchaseBillPayment> PurchaseBillPayments { get; set; }
+        public DbSet<PrinterConfiguration> PrinterConfigurations { get; set; }
+        public DbSet<CashRegister> CashRegisters { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -167,6 +169,10 @@ namespace EDA.INFRAESTRUCTURE
                       .WithMany()
                       .HasForeignKey(e => e.DiscountId)
                       .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.CashRegister)
+                      .WithMany()
+                      .HasForeignKey(e => e.CashRegisterId)
+                      .OnDelete(DeleteBehavior.Restrict);
                 entity.HasMany(e => e.SoldProducts)
                       .WithOne()
                       .HasForeignKey(e => e.InvoiceId)
@@ -236,6 +242,10 @@ namespace EDA.INFRAESTRUCTURE
                       .WithMany()
                       .HasForeignKey(e => e.UserId)
                       .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.CashRegister)
+                      .WithMany()
+                      .HasForeignKey(e => e.CashRegisterId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Provider
@@ -300,6 +310,33 @@ namespace EDA.INFRAESTRUCTURE
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
+            // PrinterConfiguration
+            modelBuilder.Entity<PrinterConfiguration>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.PrinterType).IsRequired();
+                entity.Property(e => e.PrinterName).HasMaxLength(200);
+                entity.Property(e => e.FontSize).HasDefaultValue(8);
+                entity.Property(e => e.CopyStrategy).IsRequired();
+                entity.Property(e => e.CopiesCount).HasDefaultValue(1);
+                entity.Property(e => e.PrintWidth).HasDefaultValue(80);
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+            });
+
+            // CashRegister
+            modelBuilder.Entity<CashRegister>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Code).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+                entity.HasOne(e => e.PrinterConfiguration)
+                      .WithMany()
+                      .HasForeignKey(e => e.PrinterConfigurationId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
             // Seed Data
             SeedData(modelBuilder);
         }
@@ -344,7 +381,7 @@ namespace EDA.INFRAESTRUCTURE
             //Default Expense Accounts
             modelBuilder.Entity<ExpenseAccount>().HasData(
                 new ExpenseAccount { Id = 1, Name = "Alquiler" },
-                new ExpenseAccount { Id = 2, Name = "Servicios P�blicos" },
+                new ExpenseAccount { Id = 2, Name = "Servicios Publicos" },
                 new ExpenseAccount { Id = 3, Name = "Sueldos y Salarios" },
                 new ExpenseAccount { Id = 4, Name = "Materiales y Suministros" },
                 new ExpenseAccount { Id = 5, Name = "Publicidad y Marketing" },
@@ -353,6 +390,35 @@ namespace EDA.INFRAESTRUCTURE
                 new ExpenseAccount { Id = 8, Name = "Mantenimiento y Reparaciones" },
                 new ExpenseAccount { Id = 9, Name = "Gastos Financieros" },
                 new ExpenseAccount { Id = 10, Name = "Otros Gastos" }
+            );
+
+            // Default PrinterConfiguration
+            modelBuilder.Entity<PrinterConfiguration>().HasData(
+                new PrinterConfiguration
+                {
+                    Id = 1,
+                    Name = "Impresora Termica 80mm",
+                    PrinterType = 1, // Thermal
+                    FontSize = 8,
+                    CopyStrategy = 2, // DoublePrint
+                    CopiesCount = 2,
+                    PrintWidth = 80,
+                    IsActive = true,
+                    CreationDate = new DateTime(2024, 1, 1)
+                }
+            );
+
+            // Default CashRegister
+            modelBuilder.Entity<CashRegister>().HasData(
+                new CashRegister
+                {
+                    Id = 1,
+                    Name = "Caja Principal",
+                    Code = "C001",
+                    IsActive = true,
+                    CreationDate = new DateTime(2024, 1, 1),
+                    PrinterConfigurationId = 1
+                }
             );
         }
     }

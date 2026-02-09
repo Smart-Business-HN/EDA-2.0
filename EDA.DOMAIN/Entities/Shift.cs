@@ -15,5 +15,9 @@ namespace EDA.DOMAIN.Entities
         public decimal? ExpectedAmount { get; set; }
         public decimal? Difference { get; set; }
         public bool IsOpen { get; set; }
+
+        // Caja Registradora
+        public int? CashRegisterId { get; set; }
+        public virtual CashRegister? CashRegister { get; set; }
     }
 }
